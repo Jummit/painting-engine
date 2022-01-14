@@ -1,0 +1,122 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://assets/models/cylinder.obj" type="ArrayMesh" id=1]
+[ext_resource path="res://addons/navigation_camera/navigation_camera.gd" type="Script" id=2]
+[ext_resource path="res://main.gd" type="Script" id=4]
+[ext_resource path="res://addons/painter/preview/brush_preview.tscn" type="PackedScene" id=5]
+[ext_resource path="res://addons/painter/preview/stencil_preview.tscn" type="PackedScene" id=6]
+[ext_resource path="res://addons/property_panel/property_panel.tscn" type="PackedScene" id=8]
+
+[sub_resource type="SpatialMaterial" id=1]
+flags_albedo_tex_force_srgb = true
+params_depth_draw_mode = 1
+normal_enabled = true
+normal_scale = 1.63
+ao_enabled = true
+ao_light_affect = 0.0
+ao_on_uv2 = false
+ao_texture_channel = 0
+
+[node name="Main" type="Spatial"]
+script = ExtResource( 4 )
+
+[node name="BrushPreview" parent="." instance=ExtResource( 5 )]
+appearance = 1
+painter = NodePath("")
+
+[node name="PaintableModel" type="MeshInstance" parent="."]
+material_override = SubResource( 1 )
+mesh = ExtResource( 1 )
+material/0 = null
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 11.0513 )
+current = true
+script = ExtResource( 2 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 0.0575117, -0.593768, 0.802578, 0, 0.803909, 0.594752, -0.998345, -0.0342052, 0.0462342, 0, 2.39993, 0 )
+shadow_enabled = true
+
+[node name="SaveButton" type="Button" parent="."]
+margin_left = 12.0
+margin_top = 10.0
+margin_right = 97.0
+margin_bottom = 30.0
+text = "Save Result"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MeshOptionButton" type="OptionButton" parent="."]
+margin_left = 13.0
+margin_top = 37.0
+margin_right = 100.0
+margin_bottom = 57.0
+text = "Cylinder"
+items = [ "Cylinder", null, false, 0, null, "Cube", null, false, 1, null, "Plane", null, false, 2, null, "Monkey", null, false, 3, null ]
+selected = 0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SideBar" type="Panel" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -263.0
+margin_top = 13.0
+margin_right = -14.0
+margin_bottom = -18.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SideBar"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 6.0
+margin_top = 6.0
+margin_right = -5.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Title" type="Label" parent="SideBar/VBoxContainer"]
+margin_right = 238.0
+margin_bottom = 14.0
+text = "Brush"
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="BrushPropertyPanel" parent="SideBar/VBoxContainer" instance=ExtResource( 8 )]
+margin_top = 18.0
+margin_right = 238.0
+margin_bottom = 563.0
+size_flags_vertical = 3
+
+[node name="StencilPreview" parent="." instance=ExtResource( 6 )]
+visible = false
+painter = NodePath("")
+
+[node name="FileDialog" type="FileDialog" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -286.5
+margin_top = -196.0
+margin_right = 286.5
+margin_bottom = 196.0
+rect_min_size = Vector2( 250, 87.5 )
+access = 2
+filters = PoolStringArray( "*.png ; PNG Images" )
+current_dir = "/home/jummit/Programming/godot/painting-engine"
+current_path = "/home/jummit/Programming/godot/painting-engine/"
+
+[connection signal="pressed" from="SaveButton" to="." method="_on_SaveButton_pressed"]
+[connection signal="item_selected" from="MeshOptionButton" to="." method="_on_MeshOptionButton_item_selected"]
+[connection signal="property_changed" from="SideBar/VBoxContainer/BrushPropertyPanel" to="." method="_on_BrushPropertyPanel_property_changed"]
+[connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]

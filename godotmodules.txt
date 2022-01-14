@@ -1,0 +1,4 @@
+https://github.com/Jummit/navigation-camera.git 411b5e9d
+https://github.com/AlexDarigan/WAT.git 98ba884e
+https://github.com/Jummit/node-referencer-addon.git 37dba929
+https://github.com/Jummit/property-panel.git 37222762
