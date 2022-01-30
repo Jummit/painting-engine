@@ -59,7 +59,7 @@ void fragment() {
 	ALBEDO = texture(albedo, UV).rgb * brush_color.rgb;
 	if (previous_color.a > 0.0)
 		ALBEDO = mix(previous_color.rgb, ALBEDO, strength);
-	ALPHA = clamp(max(previous_color.a, strength), 0, max_opacity);
+	ALPHA = clamp(previous_color.a + strength, 0, max_opacity);
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
 	if (ALPHA > 0.0)
