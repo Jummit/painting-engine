@@ -73,3 +73,9 @@ func get_color(channel : int) -> Color:
 # Returns the texture a channel texture is tintet, white if not specified.
 func get_texture(channel : int) -> Texture:
 	return null if textures.size() <= channel else textures[channel]
+
+
+# Returns a new brush with the same settings.
+func duplicate() -> Object:
+	return dict2inst(inst2dict(self))
+
