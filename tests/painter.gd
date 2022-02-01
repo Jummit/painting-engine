@@ -163,7 +163,7 @@ func asserts_color_equal(a : Color, b : Color, context := "") -> void:
 	var typeofb = "Color"
 	var passed: String = "|%s| %s is approx. equal to |%s| %s" % [typeofa, a, typeofb, b]
 	var failed: String = "|%s| %s is not approx. equal to |%s| %s" % [typeofa, a, typeofb, b]
-	var success = Vector3(a.r, a.g, a.b).distance_to(Vector3(b.r, b.g, b.b)) < 0.2
+	var success = Vector3(a.r, a.g, a.b).distance_to(Vector3(b.r, b.g, b.b)) < 0.1
 	var expected = passed
 	var result = passed if success else failed
 	asserts.output(preload("res://addons/WAT/assertions/assertion.gd")._result(success, expected, result, context))
