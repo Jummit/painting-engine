@@ -64,7 +64,6 @@ func _ready() -> void:
 	setup_painter()
 
 
-
 func _unhandled_input(event: InputEvent) -> void:
 	if handle_mask_input(event) or handle_brush_input(event):
 		camera.set_process_input(false)
