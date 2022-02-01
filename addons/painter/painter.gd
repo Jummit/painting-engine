@@ -25,9 +25,7 @@ painter.cleanup()
 All functions that take time yield and can be waited for like this:
 
 ```gdscript
-result = painter.redo()
-while result is GDScriptFunctionState:
-	result = yield(result, "completed")
+yield(Awaiter.new(painter.redo()), "done")
 ```
 """
 
