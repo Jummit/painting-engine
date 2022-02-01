@@ -54,7 +54,7 @@ margin_top = 37.0
 margin_right = 100.0
 margin_bottom = 57.0
 text = "Cylinder"
-items = [ "Cylinder", null, false, 0, null, "Cube", null, false, 1, null, "Plane", null, false, 2, null, "Monkey", null, false, 3, null ]
+items = [ "Cylinder", null, false, 0, null, "Cube", null, false, 1, null, "Plane", null, false, 2, null, "Monkey", null, false, 3, null, "Bench", null, false, 4, null ]
 selected = 0
 __meta__ = {
 "_edit_use_anchors_": false
