@@ -85,3 +85,4 @@ func _set_painter(to):
 	painter = to
 	if to:
 		_painter = get_node(painter)
+
