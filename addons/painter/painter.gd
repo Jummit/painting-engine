@@ -30,12 +30,12 @@ yield(Awaiter.new(painter.redo()), "done")
 """
 
 # TODO:
-# when the stroke was being painted while another completed.
 # Reimplement stencils
 # Fix brush preview being too large when not over surface
 # Screen-space painting
 # Viewport-dependent size
 # UV size
+# Explicit surface selection.
 
 # Possibilities:
 # Only render region and update with `VisualServer.texture_set_data_partial`.
@@ -51,7 +51,11 @@ signal _results_loaded
 
 # Initial State
 
+# The model being painted. The MeshInstance is used to determine the transform
+# and mesh.
 var _model : MeshInstance
+# The size of the resulting texture. Preferably square with the width and hight
+# being a power of two.
 var _result_size : Vector2
 var _undo_redo := UndoRedo.new()
 # Util for saving and loading sets of textures to memory/disk.
@@ -61,7 +65,10 @@ var _texture_store : TexturePackStore
 var _seams_texture : Texture
 # The number of painting viewports available.
 var _channels : int
+# If `finish_stroke()` was called while a paint operation was in progress. If
+# true, `finish_stroke()` will be called after the operation is completed.
 var _finish_after_stroke : bool
+# If a paint operation is in progress.
 var _painting : bool
 
 # Runtime State
@@ -77,6 +84,7 @@ var _next_size := randf()
 # Next random angle.
 var _next_angle := randf()
 
+# Path to the folder of textures used for undo/redo.
 const TEXTURE_PATH := "user://undo_textures/{painter}"
 
 const TexturePackStore = preload("utils/texture_pack_store.gd")
@@ -121,6 +129,7 @@ func init(model : MeshInstance, result_size : Vector2, channels := 1,
 
 # Overrides the result of the channels using a list of colors/textures.
 func clear_with(values : Array) -> void:
+	_assert_ready()
 	var yielder := MultiYielder.new()
 	for channel in values.size():
 		if values[channel]:
@@ -131,6 +140,7 @@ func clear_with(values : Array) -> void:
 
 # Returns the painted result of the given channel.
 func get_result(channel : int) -> ViewportTexture:
+	_assert_ready()
 	assert(channel <= _channels, "Channel out of bounds: %s" % channel)
 	var texture : ViewportTexture = _get_channel_painter(channel).get_result()
 	texture.flags = Texture.FLAGS_DEFAULT
@@ -140,6 +150,7 @@ func get_result(channel : int) -> ViewportTexture:
 # Paint on the model at the given `screen_pos` using the `brush`.
 # Optionally the pen pressure can be provided.
 func paint(screen_pos : Vector2, pressure := 1.0) -> void:
+	_assert_ready()
 	# Verify the brush transforms.
 	var transforms := _get_brush_transforms(screen_pos, pressure)
 	if not transforms:
@@ -158,6 +169,7 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 
 # Add a new stroke which can be undone using `undo`.
 func finish_stroke() -> void:
+	_assert_ready()
 	_last_transform = Transform()
 	if not _result_changed:
 		return
@@ -174,6 +186,7 @@ func finish_stroke() -> void:
 
 # Redo the last paintstroke added by calling `finish_stroke`.
 func undo() -> bool:
+	_assert_ready()
 	if _painting:
 		return
 	var result := _undo_redo.undo()
@@ -183,6 +196,7 @@ func undo() -> bool:
 
 # Redo the last paintstroke.
 func redo() -> bool:
+	_assert_ready()
 	if _painting:
 		return
 	var result := _undo_redo.redo()
@@ -192,6 +206,7 @@ func redo() -> bool:
 
 # Replaces the old channels with a new set of empty painting channels.
 func reset_channels(count : int) -> void:
+	_assert_ready()
 	_channels = count
 	for channel_painter in _channel_painters.get_children():
 		channel_painter.queue_free()
@@ -204,13 +219,20 @@ func reset_channels(count : int) -> void:
 
 # Delete textures used for undo/redo from disk.
 func cleanup() -> void:
+	_assert_ready()
 	_texture_store.cleanup()
 
 
 # Starting from nothing, retrace the painting steps with the specified
 # resolution. This could take a while.
 func repaint(resolution : Vector2) -> void:
+	_assert_ready()
 	pass
+
+
+# Assert that the painter was initialized before calling a method.
+func _assert_ready() -> void:
+	assert(_model, "Painter not initialized.")
 
 
 # Painting
@@ -305,6 +327,8 @@ func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 				* lerp(1.0, _next_size, brush.size_jitter))
 
 
+# Returns the given transform with its rotation and origin mirrored using a
+# basis.
 func _get_mirrored(transforms : Array, flip_basis : Basis) -> Array:
 	var new := transforms.duplicate()
 	for transform in transforms:
@@ -317,6 +341,7 @@ func _get_mirrored(transforms : Array, flip_basis : Basis) -> Array:
 
 # Undo/Redo
 
+# Perform `_store_results` on a thread as it uses slow file IO.
 func _store_results_threaded(thread : Thread) -> void:
 	var pack := _store_results()
 	_undo_redo.create_action("Paintstroke")
@@ -327,6 +352,7 @@ func _store_results_threaded(thread : Thread) -> void:
 	thread.call_deferred("wait_to_finish")
 
 
+# Add the channel results in the texture store and return the new pack.
 func _store_results() -> TexturePackStore.Pack:
 	var results := []
 	for channel in _channels:
@@ -334,6 +360,8 @@ func _store_results() -> TexturePackStore.Pack:
 	return _texture_store.add_textures(results)
 
 
+# Set the pack of textures as the current result. Emits `_result_loaded` when
+# finished.
 func _load_results(pack : TexturePackStore.Pack) -> void:
 	_current_pack = pack
 	yield(Awaiter.new(clear_with(pack.get_textures())), "done")
