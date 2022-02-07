@@ -185,5 +185,5 @@ func setup_painter() -> void:
 				CHANNELS.keys()[channel] + "_texture"] =\
 				painter.get_result(channel)
 	
-	brush_preview.set_painter(painter.get_path())
-	stencil_preview.set_painter(painter.get_path())
+	brush_preview.painter = painter.get_path()
+	stencil_preview.painter = painter.get_path()

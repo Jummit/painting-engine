@@ -21,8 +21,6 @@ ao_texture_channel = 0
 script = ExtResource( 4 )
 
 [node name="BrushPreview" parent="." instance=ExtResource( 5 )]
-appearance = 1
-painter = NodePath("")
 
 [node name="PaintableModel" type="MeshInstance" parent="."]
 material_override = SubResource( 1 )
