@@ -1,5 +1,12 @@
 extends Spatial
 
+"""
+A demo of the painter addon.
+
+The brush settings can be configured in a panel to the right. The mesh can be
+switched and the result saved as a png.
+"""
+
 var changing_stencil : bool
 var changing_size : bool
 var prev_scale : float
@@ -26,6 +33,7 @@ const Brush = preload("addons/painter/brush.gd")
 const Painter = preload("addons/painter/painter.gd")
 const PropertyPanel = preload("res://addons/property_panel/property_panel.gd")
 const Properties = preload("res://addons/property_panel/properties.gd")
+const FileUtils = preload("res://addons/file_utils/file_utils.gd")
 
 onready var paintable_model : MeshInstance = $PaintableModel
 onready var camera : Camera = $Camera
@@ -39,6 +47,7 @@ func _ready() -> void:
 	brush_property_panel.set_properties([
 		"Texture",
 		Properties.FilePathProperty.new("tip"),
+		Properties.FilePathProperty.new("texture"),
 		Properties.ColorProperty.new("color"),
 		Properties.BoolProperty.new("follow_path"),
 		Properties.FloatProperty.new("spacing", 0, 1),
@@ -71,7 +80,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		handle_paint_input(event)
 
 
-func _unhandled_key_input(event):
+func _unhandled_key_input(event : InputEventKey) -> void:
 	if event.is_action_pressed("quit"):
 		get_tree().quit()
 	if event.is_action_pressed("redo"):
@@ -134,18 +143,16 @@ func handle_brush_input(event : InputEvent) -> bool:
 func _on_BrushPropertyPanel_property_changed(property : String, value) -> void:
 	match property:
 		"color":
-			painter.brush.colors.resize(1)
-			painter.brush.colors[0] = value
+			painter.brush.colors = [value]
+		"texture":
+			painter.brush.textures = [FileUtils.as_texture(value)]
 		"symmetry":
 			painter.brush.symmetry = Brush.Symmetry[value]
 		"symmetry_axis":
 			painter.brush.symmetry_axis = SYMMETRY_AXIS[value]
+		"tip":
+			painter.brush.tip = FileUtils.as_texture(value)
 		_:
-			if value is String:
-				var image := Image.new()
-				image.load(value)
-				value = ImageTexture.new()
-				value.create_from_image(image)
 			painter.brush[property] = value
 
 
