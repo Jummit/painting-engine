@@ -3,8 +3,8 @@ extends Node
 """
 Utility for painting meshes.
 
-This class allows interatively painting multiple channels of the surface of a 3D
-meshes like albedo, normal etc. using various brush parameters.
+This class allows interatively painting multiple channels of the surface of a
+3D meshes like albedo, normal etc. using various brush parameters.
 It supports undo/redo, radial and mirrored symmetry, tangent-space painting,
 erasing, size and angle jitter, follow path, clearing the results with colors
 or textures and showing a brush preview by adding a `brush_preview.tscn`.
@@ -13,12 +13,9 @@ or textures and showing a brush preview by adding a `brush_preview.tscn`.
 
 ```gdscript
 painter.init(model, Vector2(1024, 1024), 4, brush, [Color.white])
-
 painter.paint(Vector2(10, 10))
 painter.finish_stroke()
-
 var albedo = painter.get_result(0)
-
 painter.cleanup()
 ```
 
@@ -35,7 +32,16 @@ yield(Awaiter.new(painter.redo()), "done")
 # Screen-space painting
 # Viewport-dependent size
 # UV size
-# Explicit surface selection.
+# No gaps when mouse moves fast
+# Stroke smoothing
+# Clone brush
+# Color picking
+# Backface painting
+# Repainting with higher resolution
+# Don't add full opacity in stroke
+# Position jitter
+# Clear texture folder on start
+# Explicit surface selection
 
 # Possibilities:
 # Only render region and update with `VisualServer.texture_set_data_partial`.
