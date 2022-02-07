@@ -43,7 +43,8 @@ yield(Awaiter.new(painter.redo()), "done")
 
 signal paint_completed
 
-var brush : Brush setget _set_brush
+var brush : Brush
+var session : Array
 
 # Emitted after the stored results are applied to the paint viewports.
 signal _results_loaded
@@ -83,6 +84,8 @@ const Brush = preload("brush.gd")
 const ChannelPainter = preload("channel_painter/channel_painter.gd")
 const MultiYielder = preload("utils/multi_yielder.gd")
 const Awaiter = preload("res://addons/painter/utils/awaiter.gd")
+const CameraState = preload("res://addons/painter/camera_state.gd")
+const PaintOperation = preload("res://addons/painter/paint_operation.gd")
 
 onready var _channel_painters : Node = $ChannelPainters
 onready var _collision_shape : CollisionShape = $ClickViewport/StaticBody/CollisionShape
@@ -102,6 +105,7 @@ func _notification(what : int) -> void:
 func init(model : MeshInstance, result_size : Vector2, channels := 1,
 		initial_brush : Brush = null, start_values := []) -> void:
 	_model = model
+	brush = initial_brush
 	_result_size = result_size
 	_texture_store = TexturePackStore.new(
 			TEXTURE_PATH.format({painter=str(get_instance_id())}))
@@ -111,7 +115,6 @@ func init(model : MeshInstance, result_size : Vector2, channels := 1,
 	_collision_shape.transform = _model.transform
 	_seams_texture = yield(_seams_generator.generate(_model.mesh), "completed")
 	reset_channels(channels)
-	_set_brush(initial_brush)
 	yield(Awaiter.new(clear_with(start_values)), "done")
 	_current_pack = _store_results()
 
@@ -137,6 +140,7 @@ func get_result(channel : int) -> ViewportTexture:
 # Paint on the model at the given `screen_pos` using the `brush`.
 # Optionally the pen pressure can be provided.
 func paint(screen_pos : Vector2, pressure := 1.0) -> void:
+	# Verify the brush transforms.
 	var transforms := _get_brush_transforms(screen_pos, pressure)
 	if not transforms:
 		return
@@ -144,22 +148,12 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 			transforms.front().origin) < brush.spacing * brush.size\
 			* (pressure if brush.size_pen_pressure else 1.0):
 		return
-	
 	_next_angle = randf()
 	_next_size = randf()
 	_last_transform = transforms.front()
-	
-	_painting = true
-	var yielder := MultiYielder.new()
-	for transform in transforms:
-		for channel in _channels:
-			_get_channel_painter(channel).paint(transform, pressure)
-			yielder.add(_get_channel_painter(channel), "paint_completed")
-	yield(yielder, "all_completed")
-	
-	_result_changed = true
-	_painting = false
-	emit_signal("paint_completed")
+	_do_paint(PaintOperation.new(CameraState.new(
+			_model.get_viewport().get_camera()), _model.transform, screen_pos,
+			brush.duplicate(), pressure))
 
 
 # Add a new stroke which can be undone using `undo`.
@@ -170,7 +164,8 @@ func finish_stroke() -> void:
 	if _painting:
 		yield(self, "paint_completed")
 	for channel in _channels:
-		_get_channel_painter(channel).finish_stroke()
+		yield(Awaiter.new(_get_channel_painter(channel).finish_stroke()),
+				"done")
 	var thread := Thread.new()
 	thread.start(self, "_store_results_threaded", thread)
 	_result_changed = false
@@ -204,12 +199,40 @@ func reset_channels(count : int) -> void:
 		var channel_painter := preload(
 				"channel_painter/channel_painter.tscn").instance()
 		_channel_painters.add_child(channel_painter)
-		channel_painter.init(_model, _result_size, brush, _seams_texture)
+		channel_painter.init(_model.mesh, _result_size, _seams_texture)
 
 
 # Delete textures used for undo/redo from disk.
 func cleanup() -> void:
 	_texture_store.cleanup()
+
+
+# Starting from nothing, retrace the painting steps with the specified
+# resolution. This could take a while.
+func repaint(resolution : Vector2) -> void:
+	pass
+
+
+# Painting
+
+# Perform a paint operation.
+func _do_paint(operation : PaintOperation) -> void:
+	_painting = true
+	var yielder := MultiYielder.new()
+	for transform in _get_brush_transforms(operation.screen_position,
+			operation.pressure):
+		for channel in _channels:
+			_get_channel_painter(channel).paint(brush, transform, operation)
+			yielder.add(_get_channel_painter(channel), "paint_completed")
+	yield(yielder, "all_completed")
+	_result_changed = true
+	_painting = false
+	emit_signal("paint_completed")
+
+
+# Returns the ChannelPainter of the given channel.
+func _get_channel_painter(channel : int) -> ChannelPainter:
+	return _channel_painters.get_child(channel) as ChannelPainter
 
 
 # Brush Placement
@@ -227,6 +250,8 @@ func get_brush_preview_transforms(screen_pos : Vector2,
 
 
 # Returns an empty array if the brush didn't hit the mesh.
+# Pressure is required because it scales the transform if the brush is
+# configured to do so.
 func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 		preview := false) -> Array:
 	var from := _model.get_viewport().get_camera().project_ray_origin(screen_pos)
@@ -314,14 +339,3 @@ func _load_results(pack : TexturePackStore.Pack) -> void:
 	yield(Awaiter.new(clear_with(pack.get_textures())), "done")
 	emit_signal("_results_loaded")
 
-
-# Misc
-
-func _get_channel_painter(channel : int) -> ChannelPainter:
-	return _channel_painters.get_child(channel) as ChannelPainter
-
-
-func _set_brush(to : Brush) -> void:
-	brush = to
-	for channel in _channels:
-		_get_channel_painter(channel).brush = brush
