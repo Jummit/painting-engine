@@ -19,7 +19,7 @@ enum Symmetry {
 # The scale of the brush tip.
 var size := 1.0
 # The projection which projects the mouse position into brush space.
-var projection : int = Projection.SCREEN_SPACE
+var projection : int = Projection.SURFACE_SPACE
 # If the result should be removed by the opacity of the stroke.
 var erase := false
 # The texture of each channel.
