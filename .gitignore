@@ -8,6 +8,7 @@ addons/node_referencer
 addons/navigation_camera
 addons/property_panel
 addons/WAT
+addons/file_utils
 
 # WAT Tests
 
