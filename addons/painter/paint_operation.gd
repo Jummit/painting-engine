@@ -1,5 +1,12 @@
 extends Reference
 
+"""
+All information that is needed to perform a paint operation
+
+Used to record the painting process and replay it with a higher result
+resolution.
+"""
+
 const Brush = preload("brush.gd")
 const CameraState = preload("camera_state.gd")
 
