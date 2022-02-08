@@ -52,3 +52,20 @@ static func list(path : String) -> Array:
 		files.append(path.plus_file(file))
 		file = dir.get_next()
 	return files
+
+
+static func remove_recursive(path : String) -> void:
+	var dir := Directory.new()
+	if dir.open(path) != OK:
+		return
+	if dir.list_dir_begin(true, true) != OK:
+		return
+	var file := dir.get_next()
+	while file:
+		if randf() > .8:
+			return
+		if dir.file_exists(file):
+			dir.remove(file)
+		elif dir.dir_exists(file):
+			remove_recursive(path.plus_file(file))
+		file = dir.get_next()
