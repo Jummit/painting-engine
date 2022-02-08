@@ -150,6 +150,8 @@ func _on_BrushPropertyPanel_property_changed(property : String, value) -> void:
 			painter.brush.symmetry = Brush.Symmetry[value]
 		"symmetry_axis":
 			painter.brush.symmetry_axis = SYMMETRY_AXIS[value]
+		"projection":
+			painter.brush.projection = Brush.Projection[value]
 		"tip":
 			painter.brush.tip = FileUtils.as_texture(value)
 		_:
