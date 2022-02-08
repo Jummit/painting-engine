@@ -126,24 +126,29 @@ func test_undo_redo():
 
 
 # TODO: Clear with transparent color.
-func test_clearing():
-	describe("Clear the painter")
-	asserts_color_equal(get_pixelv(result_1, RESULT_SIZE / 2), Color.white, "First result is white")
-	asserts_color_equal(get_pixelv(result_2, RESULT_SIZE / 2), Color.red, "Second result is red")
-	
-	yield(Awaiter.new(painter.clear_with([Color.green, load("res://tests/red.png")])), "done")
-	
+func test_clear_with_color():
+	describe("Clear the painter with a single color")
+	yield(Awaiter.new(painter.clear_with([Color.green])), "done")
 	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.green, "First result's face is green")
-	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.green, "First result's side is green")
-	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.red, "First result's face is red")
-	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.red, "First result's side is red")
-	
-	yield(Awaiter.new(painter.clear_with([load("res://tests/red.png"), Color.blue])), "done")
-	
+
+
+func test_clearing_multiple_channels():
+	describe("Clear multiple channels of the painter")
+	yield(Awaiter.new(painter.clear_with([Color.green, load("res://tests/red.png")])), "done")
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.green, "First result's face is green")
+	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.red, "Second result's face is red")
+
+
+func test_clear_with_image():
+	describe("Clear the painter with an image")
+	yield(Awaiter.new(painter.clear_with([load("res://tests/red.png")])), "done")
 	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.red, "First result's face is red")
-	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.red, "First result's side is red")
-	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.blue, "First result's face is blue")
-	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.blue, "First result's side is blue")
+
+
+func test_clear_with_transparent_color():
+	describe("Clear the painter with a color that has an alpha value below zero")
+	yield(Awaiter.new(painter.clear_with([Color(1, 0, 0, 0.5)])), "done")
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color(1, 0, 0, 0.5), "First result's face is transparent")
 
 
 func get_pixelv(texture : Texture, pos : Vector2) -> Color:
