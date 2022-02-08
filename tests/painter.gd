@@ -163,4 +163,3 @@ func asserts_color_equal(a : Color, b : Color, context := "") -> void:
 	var expected = passed
 	var result = passed if success else failed
 	asserts.output(preload("res://addons/WAT/assertions/assertion.gd")._result(success, expected, result, context))
-

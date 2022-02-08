@@ -11,4 +11,3 @@ func test_duplicate() -> void:
 	b.size = 2
 	asserts.is_equal(a.size, 1, "Size of duplicated brush stays the same.")
 	asserts.is_equal(b.size, 2, "Size of original brush changed.")
-

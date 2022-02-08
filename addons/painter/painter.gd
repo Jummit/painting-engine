@@ -378,4 +378,3 @@ func _load_results(pack : TexturePackStore.Pack) -> void:
 	_current_pack = pack
 	yield(Awaiter.new(clear_with(pack.get_textures())), "done")
 	emit_signal("_results_loaded")
-
