@@ -4,6 +4,7 @@ extends WATTest
 const MultiYielder = preload("res://addons/painter/utils/multi_yielder.gd")
 
 func test_one_yield() -> void:
+	describe("MultiYielder works when given one function to wait for")
 	var yielder := MultiYielder.new()
 	yielder.add(do_something(), "completed")
 	yield(yielder, "all_completed")
@@ -11,6 +12,7 @@ func test_one_yield() -> void:
 
 
 func test_multiple_yields() -> void:
+	describe("MultiYielder works when given multiple functions to wait for")
 	var yielder := MultiYielder.new()
 	yielder.add(do_something(), "completed")
 	yielder.add(do_something(), "completed")

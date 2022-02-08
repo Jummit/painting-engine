@@ -73,7 +73,7 @@ var _seams_texture : Texture
 var _channels : int
 # If `finish_stroke()` was called while a paint operation was in progress. If
 # true, `finish_stroke()` will be called after the operation is completed.
-var _finish_after_stroke : bool
+var _finish_stroke_when_done : bool
 # If a paint operation is in progress.
 var _painting : bool
 
@@ -168,9 +168,12 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 	_next_angle = randf()
 	_next_size = randf()
 	_last_transform = transforms.front()
-	_do_paint(PaintOperation.new(CameraState.new(
+	yield(Awaiter.new(_do_paint(PaintOperation.new(CameraState.new(
 			_model.get_viewport().get_camera()), _model.transform, screen_pos,
-			brush.duplicate(), pressure))
+			brush.duplicate(), pressure))), "done")
+	if _finish_stroke_when_done:
+		finish_stroke()
+		_finish_stroke_when_done = false
 
 
 # Add a new stroke which can be undone using `undo`.
@@ -180,7 +183,10 @@ func finish_stroke() -> void:
 	if not _result_changed:
 		return
 	if _painting:
-		yield(self, "paint_completed")
+		_finish_stroke_when_done = true
+		# Still wait for the result to be stored so this function can savely
+		# be waited upon.
+		yield(self, "_results_loaded")
 	for channel in _channels:
 		yield(Awaiter.new(_get_channel_painter(channel).finish_stroke()),
 				"done")
