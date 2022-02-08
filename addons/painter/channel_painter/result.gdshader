@@ -1,6 +1,10 @@
 shader_type canvas_item;
 render_mode unshaded, blend_disabled;
 
+/*
+Shader that applies a stroke to the existing result.
+*/
+
 uniform sampler2D previous;
 uniform sampler2D stroke;
 uniform sampler2D seams;

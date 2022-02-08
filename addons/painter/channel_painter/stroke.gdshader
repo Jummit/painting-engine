@@ -1,6 +1,21 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled;
 
+/*
+Shader that handles the painting; the core of the painting engine.
+
+The scene is set up so that the camera and the model have the same transform as
+the painter sees it.
+As the result is a texture which can be applied in UV-space, the model is then
+transformed into a quad in front of the camera.
+All of this is done to preserve the information about the camera transform.
+
+The shader gets passed the pre-calculated transform of the brush, with
+translation, rotation and scale already figured out.
+
+The brush tip is then projected into surface-space using that transform.
+*/
+
 uniform mat4 brush_transform;
 uniform vec4 brush_color = vec4(1.0);
 uniform sampler2D albedo : hint_white;
@@ -35,7 +50,6 @@ vec3 triplanar_mapped_texture(sampler2D sampler) {
 
 void fragment() {
 	// TODO: Optimize this.
-	// TODO: Make small brushes not be low opacity.
 	mat4 offset_uv_transform = mat4(
 		vec4(1.0, 0.0, 0.0, 0.5),
 		vec4(0.0, 1.0, 0.0, 0.5),
