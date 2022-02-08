@@ -25,7 +25,7 @@ _global_script_classes=[ {
 "path": "res://addons/WAT/test/test.gd"
 } ]
 _global_script_class_icons={
-"NavigationCamera": "",
+"NavigationCamera": "res://addons/navigation_camera/navigation_camera_icon.svg",
 "WAT": "",
 "WATTest": ""
 }
