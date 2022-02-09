@@ -3,8 +3,8 @@ extends Spatial
 """
 Interactive in-viewport brush peview.
 
-Uses the tip the first texture and the first color to show a preview of what
-the brush looks like.
+Uses the tip and first texture and color to show a preview of what the brush
+looks like.
 """
 
 enum Appearance {
@@ -40,7 +40,8 @@ func _input(event : InputEvent) -> void:
 		return
 
 	var pressure := 1.0
-	if event is InputEventMouseMotion and event.button_mask == BUTTON_LEFT and brush.size_pen_pressure:
+	if event is InputEventMouseMotion and event.button_mask == BUTTON_LEFT\
+			and brush.size_pen_pressure:
 		pressure = event.pressure
 	var transforms : Array = _painter.get_brush_preview_transforms(
 			get_viewport().get_mouse_position(), pressure, follow_mouse)

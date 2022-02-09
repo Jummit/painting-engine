@@ -288,6 +288,7 @@ func get_brush_preview_transforms(screen_pos : Vector2,
 # configured to do so.
 func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 		preview := false) -> Array:
+	# FIXME: This is a mess.
 	var from := _model.get_viewport().get_camera().project_ray_origin(screen_pos)
 	var to := from + _model.get_viewport().get_camera().project_ray_normal(
 			screen_pos) * 100
@@ -301,6 +302,9 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 	var transform := Transform(Basis(x, y, z).orthonormalized(),
 			result.position + result.normal / 100.0)
 	if brush.follow_path and not _last_transform and not preview:
+		# Follow path can only work if one transform was already provided.
+		# Because the preview should be displayed correctly when hovering
+		# only return if the function was called by the painter.
 		_last_transform = transform
 		return []
 	elif brush.follow_path and _last_transform\

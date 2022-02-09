@@ -6,13 +6,19 @@ Brush settings.
 """
 
 enum Projection {
+	# The brush is projected from the camera view.
 	SCREEN_SPACE,
+	# The brush is projected into the tangent space of the mesh.
 	SURFACE_SPACE,
 }
 
 enum Symmetry {
+	# No symmetry.
 	NONE,
+	# The brush is mirrored on each non-null axis of `symmetry_axis`.
 	MIRROR,
+	# The brush is rotated around the `symmetry_axis`. The amount is specified
+	# by `radial_symmetry_count`.
 	RADIAL,
 }
 
