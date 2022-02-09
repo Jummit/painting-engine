@@ -315,6 +315,8 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 		transform.basis = Basis(follow_x, follow_y, follow_z).orthonormalized()
 	transform.basis = _apply_brush_basis(transform.basis,
 			pressure if brush.size_pen_pressure else 1)
+	if (brush.symmetry) and (not brush.symmetry_axis):
+		push_warning("Using symmetry but no symmetry axis set.")
 	match brush.symmetry:
 		Brush.Symmetry.MIRROR:
 			var transforms := [transform]
@@ -345,7 +347,7 @@ func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 
 # Returns the given transform with its rotation and origin mirrored using a
 # basis.
-func _get_mirrored(transforms : Array, flip_basis : Basis) -> Array:
+static func _get_mirrored(transforms : Array, flip_basis : Basis) -> Array:
 	var new := transforms.duplicate()
 	for transform in transforms:
 		var new_transform : Transform = transform
