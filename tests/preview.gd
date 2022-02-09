@@ -33,7 +33,8 @@ func pre():
 func test_position_in_empty_space():
 	var transforms : Array = painter.get_brush_preview_transforms(
 			Vector2(3,3), 1, true)
-	transform_equal_approx(transforms.front(), Transform.FLIP_X)
+	transform_equal_approx(transforms.front(),
+			Transform().translated(Vector3(-2.47, 1.39, 0)))
 
 
 func test_single_mirror_symmetry():
@@ -76,7 +77,7 @@ func transform_equal_approx(a, b, context := ""):
 	for v in [a.basis.x.distance_to(b.basis.x),
 			a.basis.y.distance_to(b.basis.y), a.basis.z.distance_to(b.basis.z),
 			a.origin.distance_to(b.origin)]:
-		if v > 1:
+		if v > 0.2:
 			success = false
 			break
 	var expected = passed
