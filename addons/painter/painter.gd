@@ -28,10 +28,12 @@ yield(Awaiter.new(painter.redo()), "done")
 
 # TODO:
 # Reimplement stencils
+# Brush tip is upside down
 # Fix brush preview being too large when not over surface
 # Screen-space painting
 # Viewport-dependent size
 # UV size
+# Batch paint operations
 # No gaps when mouse moves fast
 # Stroke smoothing
 # Clone brush

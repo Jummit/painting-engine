@@ -124,7 +124,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if handle_mask_input(event) or handle_brush_input(event):
+	if handle_stencil_input(event) or handle_brush_input(event):
 		camera.set_process_input(false)
 	else:
 		handle_paint_input(event)
@@ -139,25 +139,7 @@ func _unhandled_key_input(event : InputEventKey) -> void:
 		painter.undo()
 
 
-func handle_mask_input(event : InputEvent) -> bool:
-	if event is InputEventMouseMotion and Input.is_action_pressed("change_stencil"):
-		if Input.is_action_pressed("scale_stencil"):
-			painter.brush.mask_transform = painter.brush.mask_transform.scaled(
-				Vector2.ONE + Vector2.ONE * event.relative.x / 500)
-			return true
-		elif Input.is_action_pressed("rotate_stencil"):
-			painter.brush.mask_transform =\
-				painter.brush.mask_transform.rotated(event.relative.x / 300)
-			return true
-		elif Input.is_action_pressed("move_stencil"):
-			painter.brush.mask_transform =\
-				painter.brush.mask_transform.translated(event.relative / 1000)
-			return true
-	elif event is InputEventMouseButton and not event.pressed:
-		camera.set_process_input(true)
-	elif event.is_action_pressed("toggle_stencil"):
-		painter.brush.mask = preload("assets/textures/bow.jpg") if\
-			not painter.brush.mask else null
+func handle_stencil_input(_event : InputEvent) -> bool:
 	return false
 
 
