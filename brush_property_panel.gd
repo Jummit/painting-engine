@@ -33,6 +33,8 @@ class EditableBrush:
 					brush.textures = [texture]
 				else:
 					brush.textures = []
+			"stencil":
+				brush.stencil = FileUtils.as_texture(value)
 			"symmetry":
 				brush.symmetry = Brush.Symmetry[value]
 			"symmetry_axis":
@@ -54,6 +56,8 @@ class EditableBrush:
 				return brush.get_color(0)
 			"texture":
 				return brush.get_texture(0)
+			"stencil":
+				return null if not brush.stencil else brush.stencil.resource_path
 			"symmetry":
 				return Brush.Symmetry.keys()[brush.symmetry]
 			"symmetry_axis":
