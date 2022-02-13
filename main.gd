@@ -9,8 +9,6 @@ switched and the result saved as a png.
 
 var changing_stencil : bool
 var changing_size : bool
-var prev_scale : float
-var prev_rot : float
 var change_start_value : float
 var change_start : Vector2
 var change_end : Vector2
