@@ -23,8 +23,7 @@ func _input(_event: InputEvent) -> void:
 		return
 	visible = brush.stencil != null
 	texture = brush.stencil
-	material.set_shader_param("transform",
-			brush.stencil_transform.scaled(get_viewport().size.normalized()))
+	material.set_shader_param("transform", brush.stencil_transform)
 
 
 func _set_painter(to):
