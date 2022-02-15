@@ -21,7 +21,6 @@ func _input(_event: InputEvent) -> void:
 	var brush : Brush = _painter.brush
 	if not brush:
 		return
-	visible = brush.stencil != null
 	texture = brush.stencil
 	material.set_shader_param("transform", brush.stencil_transform)
 
