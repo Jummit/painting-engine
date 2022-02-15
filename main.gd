@@ -10,6 +10,8 @@ switched and the result saved as a png.
 var changing_stencil : bool
 var changing_size : bool
 var change_start_value : float
+var change_start_rotation : float
+var start_rotation : float
 var change_start : Vector2
 var change_end : Vector2
 var painter : Painter
@@ -53,8 +55,20 @@ func _unhandled_key_input(event : InputEventKey) -> void:
 		painter.undo()
 
 
-func handle_stencil_input(_event : InputEvent) -> bool:
-	return false
+func handle_stencil_input(event : InputEvent) -> bool:
+	changing_stencil = Input.is_action_pressed("change_stencil")
+	if not changing_stencil:
+		return false
+	var mouse := get_viewport().get_mouse_position()
+	var middle := get_viewport().size / 2
+	if event.is_action_pressed("change_stencil"):
+		change_start = get_viewport().get_mouse_position()
+		change_start_rotation = painter.brush.stencil_transform.get_rotation()
+		start_rotation = -mouse.direction_to(middle).angle()
+	var new_rot := -mouse.direction_to(middle).angle()
+	painter.brush.stencil_transform = Transform2D(
+			change_start_rotation + (new_rot - start_rotation), Vector2(.5,.5))
+	return true
 
 
 func handle_paint_input(event : InputEvent) -> void:
