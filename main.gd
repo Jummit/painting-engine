@@ -9,7 +9,7 @@ switched and the result saved as a png.
 
 var changing_size : bool
 var change_start_value : float
-var stencil_start_transform : Transform2D
+var last_stencil : Transform2D
 var change_start : Vector2
 var change_end : Vector2
 var painter : Painter
@@ -54,30 +54,31 @@ func _unhandled_key_input(event : InputEventKey) -> void:
 
 
 func handle_stencil_input(event : InputEvent) -> bool:
-	if not Input.is_action_pressed("change_stencil"):
-		return false
 	var mouse := get_viewport().get_mouse_position()
 	var viewport_size := get_viewport().size
-	var middle := viewport_size / 2
-	
-	if event.is_action_pressed("change_stencil"):
+	if event.is_action("change_stencil") or event.is_action("grab_stencil"):
 		change_start = mouse
-		stencil_start_transform = painter.brush.stencil_transform
-		stencil_start_transform.x *= viewport_size.normalized().x
-		stencil_start_transform.y *= viewport_size.normalized().y
-	
-	var start_rotation := -change_start.direction_to(middle).angle()
-	var new_rot := -mouse.direction_to(middle).angle()
-	painter.brush.stencil_transform = Transform2D(
-			stencil_start_transform.get_rotation()\
-			+ (new_rot - start_rotation), Vector2())
-	var start_scale := change_start.distance_to(middle)
-	var scale := stencil_start_transform.get_scale().x\
-			- (start_scale - mouse.distance_to(middle)) / 1000.0
-	painter.brush.stencil_transform.x /= viewport_size.normalized().x / scale
-	painter.brush.stencil_transform.y /= viewport_size.normalized().y / scale
-	painter.brush.stencil_transform.origin = Vector2(.5,.5)
-	return true
+		last_stencil = painter.brush.stencil_transform
+		last_stencil.x *= viewport_size.normalized().x
+		last_stencil.y *= viewport_size.normalized().y
+	if Input.is_action_pressed("grab_stencil"):
+		painter.brush.stencil_transform.origin = last_stencil.origin\
+			+ (mouse - change_start) / viewport_size
+		return true
+	elif Input.is_action_pressed("change_stencil"):
+		var stencil_pos := last_stencil.origin * viewport_size
+		var start_rotation := -change_start.direction_to(stencil_pos).angle()
+		var new_rot := -mouse.direction_to(stencil_pos).angle()
+		painter.brush.stencil_transform = Transform2D(
+				last_stencil.get_rotation() + (new_rot - start_rotation),
+				painter.brush.stencil_transform.origin)
+		var start_scale := change_start.distance_to(stencil_pos)
+		var scale := last_stencil.get_scale().x\
+				- (start_scale - mouse.distance_to(stencil_pos)) / 1000.0
+		painter.brush.stencil_transform.x /= viewport_size.normalized().x / scale
+		painter.brush.stencil_transform.y /= viewport_size.normalized().y / scale
+		return true
+	return false
 
 
 func handle_paint_input(event : InputEvent) -> void:
