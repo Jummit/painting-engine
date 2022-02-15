@@ -23,4 +23,3 @@ func _init(_camera_state : CameraState, _model_transform : Transform,
 	screen_position = _screen_position
 	brush = _brush
 	pressure = _pressure
-
