@@ -7,11 +7,9 @@ The brush settings can be configured in a panel to the right. The mesh can be
 switched and the result saved as a png.
 """
 
-var changing_stencil : bool
 var changing_size : bool
 var change_start_value : float
-var change_start_rotation : float
-var start_rotation : float
+var stencil_start_transform : Transform2D
 var change_start : Vector2
 var change_end : Vector2
 var painter : Painter
@@ -56,18 +54,29 @@ func _unhandled_key_input(event : InputEventKey) -> void:
 
 
 func handle_stencil_input(event : InputEvent) -> bool:
-	changing_stencil = Input.is_action_pressed("change_stencil")
-	if not changing_stencil:
+	if not Input.is_action_pressed("change_stencil"):
 		return false
 	var mouse := get_viewport().get_mouse_position()
-	var middle := get_viewport().size / 2
+	var viewport_size := get_viewport().size
+	var middle := viewport_size / 2
+	
 	if event.is_action_pressed("change_stencil"):
-		change_start = get_viewport().get_mouse_position()
-		change_start_rotation = painter.brush.stencil_transform.get_rotation()
-		start_rotation = -mouse.direction_to(middle).angle()
+		change_start = mouse
+		stencil_start_transform = painter.brush.stencil_transform
+		stencil_start_transform.x *= viewport_size.normalized().x
+		stencil_start_transform.y *= viewport_size.normalized().y
+	
+	var start_rotation := -change_start.direction_to(middle).angle()
 	var new_rot := -mouse.direction_to(middle).angle()
 	painter.brush.stencil_transform = Transform2D(
-			change_start_rotation + (new_rot - start_rotation), Vector2(.5,.5))
+			stencil_start_transform.get_rotation()\
+			+ (new_rot - start_rotation), Vector2())
+	var start_scale := change_start.distance_to(middle)
+	var scale := stencil_start_transform.get_scale().x\
+			- (start_scale - mouse.distance_to(middle)) / 1000.0
+	painter.brush.stencil_transform.x /= viewport_size.normalized().x / scale
+	painter.brush.stencil_transform.y /= viewport_size.normalized().y / scale
+	painter.brush.stencil_transform.origin = Vector2(.5,.5)
 	return true
 
 
