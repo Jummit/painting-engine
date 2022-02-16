@@ -141,8 +141,10 @@ func clear_with(values : Array) -> void:
 	var yielder := MultiYielder.new()
 	for channel in values.size():
 		if values[channel]:
-			yielder.add(Awaiter.new(_get_channel_painter(channel).clear_with(
-					values[channel])), "done")
+			var channel_painter := _get_channel_painter(channel)
+			var awaiter := Awaiter.new(
+					channel_painter.clear_with(values[channel]))
+			yielder.add(awaiter, "done")
 	yield(yielder, "all_completed")
 
 
@@ -150,7 +152,7 @@ func clear_with(values : Array) -> void:
 func get_result(channel : int) -> ViewportTexture:
 	_assert_ready()
 	assert(channel <= _channels, "Channel out of bounds: %s" % channel)
-	var texture : ViewportTexture = _get_channel_painter(channel).get_result()
+	var texture := _get_channel_painter(channel).get_result()
 	texture.flags = Texture.FLAGS_DEFAULT
 	return texture
 
@@ -163,16 +165,20 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 	var transforms := _get_brush_transforms(screen_pos, pressure)
 	if not transforms:
 		return
-	if _last_transform and _last_transform.origin.distance_to(
-			transforms.front().origin) < brush.spacing * brush.size\
-			* (pressure if brush.size_pen_pressure else 1.0):
+	pressure = pressure if brush.size_pen_pressure else 1.0
+	var distance_to_last := _last_transform.origin.distance_to(
+			transforms.front().origin)
+	var minimum_spacing := brush.spacing * brush.size * pressure
+	if _last_transform and distance_to_last < minimum_spacing:
 		return
 	_next_angle = randf()
 	_next_size = randf()
 	_last_transform = transforms.front()
-	yield(Awaiter.new(_do_paint(PaintOperation.new(CameraState.new(
-			_model.get_viewport().get_camera()), _model.transform, screen_pos,
-			brush.duplicate(), pressure))), "done")
+	var operation := PaintOperation.new(CameraState.new(
+			_model.get_viewport().get_camera()), 
+			_model.transform, screen_pos,
+			brush.duplicate(), pressure)
+	yield(Awaiter.new(_do_paint(operation)), "done")
 	if _finish_stroke_when_done:
 		finish_stroke()
 		_finish_stroke_when_done = false
@@ -255,8 +261,9 @@ func _assert_ready() -> void:
 func _do_paint(operation : PaintOperation) -> void:
 	_painting = true
 	var yielder := MultiYielder.new()
-	for transform in _get_brush_transforms(operation.screen_position,
-			operation.pressure):
+	var transforms := _get_brush_transforms(operation.screen_position,
+			operation.pressure)
+	for transform in transforms:
 		for channel in _channels:
 			_get_channel_painter(channel).paint(brush, transform, operation)
 			yielder.add(_get_channel_painter(channel), "paint_completed")
@@ -280,29 +287,21 @@ func get_brush_preview_transforms(screen_pos : Vector2,
 	var transforms := _get_brush_transforms(screen_pos, pressure, true)
 	if transforms and on_surface:
 		return transforms
-	return [Transform(_apply_brush_basis(
-			_model.get_viewport().get_camera().transform.basis, pressure),
-			_model.get_viewport().get_camera().project_position(screen_pos, 2))]
+	var camera := _model.get_viewport().get_camera()
+	var basis := _apply_brush_basis(camera.transform.basis, pressure)
+	var position := camera.project_position(screen_pos, 2)
+	return [Transform(basis, position)]
 
 
+# Returns the transform of the brush when 
 # Returns an empty array if the brush didn't hit the mesh.
 # Pressure is required because it scales the transform if the brush is
 # configured to do so.
 func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 		preview := false) -> Array:
-	# FIXME: This is a mess.
-	var from := _model.get_viewport().get_camera().project_ray_origin(screen_pos)
-	var to := from + _model.get_viewport().get_camera().project_ray_normal(
-			screen_pos) * 100
-	var result := _static_body.get_world()\
-			.direct_space_state.intersect_ray(from, to)
-	if not result:
+	var transform := _get_transform_on_mesh_surface(screen_pos)
+	if not transform:
 		return []
-	var z : Vector3 = result.normal
-	var x := z.cross(Vector3.FORWARD if z.abs() == Vector3.UP else Vector3.UP)
-	var y := x.cross(z)
-	var transform := Transform(Basis(x, y, z).orthonormalized(),
-			result.position + result.normal / 100.0)
 	if brush.follow_path and not _last_transform and not preview:
 		# Follow path can only work if one transform was already provided.
 		# Because the preview should be displayed correctly when hovering
@@ -311,52 +310,49 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 		return []
 	elif brush.follow_path and _last_transform\
 			and transform.origin.x != _last_transform.origin.x:
-		var follow_z := z
-		var follow_x := _last_transform.origin.direction_to(result.position)
-		var follow_y = x.cross(z) if follow_x.x > 0 else z.cross(x)
-		transform.basis = Basis(follow_x, follow_y, follow_z).orthonormalized()
-	transform.basis = _apply_brush_basis(transform.basis,
-			pressure if brush.size_pen_pressure else 1)
-	if (brush.symmetry) and (not brush.symmetry_axis):
-		push_warning("Using symmetry but no symmetry axis set.")
-	match brush.symmetry:
-		Brush.Symmetry.MIRROR:
-			var transforms := [transform]
-			if brush.symmetry_axis.x:
-				transforms = _get_mirrored(transforms, Basis.FLIP_X)
-			if brush.symmetry_axis.y:
-				transforms = _get_mirrored(transforms, Basis.FLIP_Y)
-			if brush.symmetry_axis.z:
-				transforms = _get_mirrored(transforms, Basis.FLIP_Z)
-			return transforms
-		Brush.Symmetry.RADIAL:
-			var transforms := []
-			for symmetry_num in brush.radial_symmetry_count:
-				transforms.append(transform.rotated(brush.symmetry_axis,
-						TAU / brush.radial_symmetry_count * symmetry_num))
-			return transforms
-	return [transform]
+		transform.basis = _get_basis_pointed_towards(_last_transform.origin,
+				transform.origin, transform.basis.z)
+	pressure = pressure if brush.size_pen_pressure else 1
+	transform.basis = _apply_brush_basis(transform.basis, pressure)
+	return brush.apply_symmetry(transform)
+
+
+# Returns the surface-space transform on the given screen position.
+func _get_transform_on_mesh_surface(screen_pos : Vector2) -> Transform:
+	var camera := _model.get_viewport().get_camera()
+	var from := camera.project_ray_origin(screen_pos)
+	var to := from + camera.project_ray_normal(screen_pos) * 100
+	var result := _static_body.get_world().direct_space_state.intersect_ray(
+			from, to)
+	if not result:
+		return Transform()
+	var z : Vector3 = result.normal
+	var x := z.cross(Vector3.FORWARD if z.abs() == Vector3.UP else Vector3.UP)
+	var y := x.cross(z)
+	var basis := Basis(x, y, z).orthonormalized()
+	var origin : Vector3 = result.position + result.normal / 100.0
+	return Transform(basis, origin)
+
+
+# Returns a basis that points from a given point to another, keeping forward
+# the z axis.
+static func _get_basis_pointed_towards(from : Vector3, to : Vector3,
+		forward : Vector3) -> Basis:
+	var z := forward
+	var x := from.direction_to(to)
+	var y = x.cross(z) if x.x > 0 else z.cross(x)
+	return Basis(x, y, z).orthonormalized()
 
 
 # Returns a basis that scales and rotates the brush transform according to the
 # brush and the pressure.
 func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
+	var random_scale : float = lerp(1.0, _next_size, brush.size_jitter)
+	var scale := brush.size * (pressure + 0.1)
+	var random_angle : float = brush.angle_jitter * _next_angle
 	return basis\
-			.rotated(basis.z, brush.angle + brush.angle_jitter * _next_angle)\
-			.scaled(Vector3.ONE * brush.size * (pressure + 0.1)\
-				* lerp(1.0, _next_size, brush.size_jitter))
-
-
-# Returns the given transform with its rotation and origin mirrored using a
-# basis.
-static func _get_mirrored(transforms : Array, flip_basis : Basis) -> Array:
-	var new := transforms.duplicate()
-	for transform in transforms:
-		var new_transform : Transform = transform
-		new_transform.origin = flip_basis * transform.origin
-		new_transform.basis = flip_basis * transform.basis
-		new.append(new_transform)
-	return new
+			.rotated(basis.z, brush.angle + random_angle)\
+			.scaled(Vector3.ONE * scale * random_scale)
 
 
 # Undo/Redo

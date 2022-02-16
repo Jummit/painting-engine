@@ -85,3 +85,39 @@ func get_texture(channel : int) -> Texture:
 func duplicate() -> Object:
 	return dict2inst(inst2dict(self))
 
+
+# Returns the list of transforms that result when the given transform is
+# mirrored using this brush's symmetry options.
+func apply_symmetry(transform : Transform) -> Array:
+	if symmetry and not symmetry_axis:
+		push_warning("Using symmetry but no symmetry axis is set.")
+	match symmetry:
+		Symmetry.MIRROR:
+			var transforms := [transform]
+			if symmetry_axis.x:
+				transforms = _get_mirrored(transforms, Basis.FLIP_X)
+			if symmetry_axis.y:
+				transforms = _get_mirrored(transforms, Basis.FLIP_Y)
+			if symmetry_axis.z:
+				transforms = _get_mirrored(transforms, Basis.FLIP_Z)
+			return transforms
+		Symmetry.RADIAL:
+			var transforms := []
+			for symmetry_num in radial_symmetry_count:
+				var angle : float = TAU / radial_symmetry_count * symmetry_num
+				var rotated := transform.rotated(symmetry_axis, angle)
+				transforms.append(rotated)
+			return transforms
+	return [transform]
+
+
+# Returns the given transform with its rotation and origin mirrored using a
+# basis.
+static func _get_mirrored(transforms : Array, flip_basis : Basis) -> Array:
+	var new := transforms.duplicate()
+	for transform in transforms:
+		var new_transform : Transform = transform
+		new_transform.origin = flip_basis * transform.origin
+		new_transform.basis = flip_basis * transform.basis
+		new.append(new_transform)
+	return new
