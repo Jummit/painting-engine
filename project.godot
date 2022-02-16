@@ -44,7 +44,8 @@ Display=8
 
 [application]
 
-config/name="Painting"
+config/name="Painting Engine"
+config/description="A GPU-based 3D painting engine with advanced features."
 run/main_scene="res://main.tscn"
 config/icon="res://icon.svg"
 
