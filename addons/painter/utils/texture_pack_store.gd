@@ -4,7 +4,10 @@ extends Reference
 Utility for saving and loading textures to memory or disk.
 """
 
+# The maximum `Pack` objects stored in ram. When this value is exceeded the
+# oldest packs will be saved to disk.
 var max_packs_in_memory := 10
+# The maximum packs to save to disk before the oldest are deleted.
 var max_packs_on_disk := 30
 
 var _packs : Array
@@ -69,6 +72,8 @@ func _init(path : String):
 	dir.make_dir_recursive(path)
 
 
+# Add a new list of textures and return a pack that can be used to load textures
+# at a later point in time.
 func add_textures(new_textures : Array) -> Pack:
 	var textures := []
 	for texture in new_textures:
