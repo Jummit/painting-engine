@@ -33,8 +33,10 @@ varying vec3 normal;
 const float DEPTH_OFFSET = 0.3;
 
 void vertex() {
+	vec4 clip_space = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
+	view_uv = -(clip_space / clip_space.w).xy / 2.0 + vec2(.5, .5);
+	view_uv.x = 1.0 - view_uv.x;
 	POSITION = vec4(vec2(0.5, 0.5) - vec2(1.0 - UV.x, UV.y), 0.0, 0.5);
-	view_uv = (vec4(VERTEX, 1.0) * inverse(MODELVIEW_MATRIX)).xy;
 	position = VERTEX.xyz;
 	normal = NORMAL;
 }
@@ -62,7 +64,9 @@ void fragment() {
 	float facing = clamp(dot(
 		max(brush_transform[2].xyz, normalize(brush_transform[2].xyz) * 0.2) * 5.0,
 		normal), 0.0, 1.0);
-	float stencil_strength = texture(stencil, (vec4(view_uv, 1, 1) * stencil_transform).xy).a;
+	vec4 stencil_col = texture(stencil, ((vec4(view_uv - stencil_transform[3].xy, 1, 1)
+			* inverse(stencil_transform)).xy + vec2(.5, .5)));
+	float stencil_strength = min(stencil_col.a, stencil_col.r);
 	float strength = texture(tip, brush_uv).r * texture(tip, brush_uv).a * brush_color.a * facing * depth * stencil_strength;
 	if (any(lessThan(brush_uv, vec2(0.01))) || any(greaterThan(brush_uv, vec2(0.95))))
 		strength = 0.0;
@@ -78,4 +82,8 @@ void fragment() {
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
 	if (ALPHA > 0.0)
 		ALBEDO /= ALPHA;
+	
+//	ALPHA = 1.0;
+//	ALBEDO = vec3(view_uv, 1.0);
+//	ALBEDO = texture(albedo, view_uv).rgb;
 }
