@@ -18,4 +18,3 @@ func _init(camera : Camera) -> void:
 func apply(camera : Camera) -> void:
 	for member in MEMBERS:
 		camera[member] = _state[member]
-

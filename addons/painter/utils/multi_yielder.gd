@@ -15,4 +15,3 @@ func add(object : Object, signal_name : String):
 	yields_left -= 1
 	if not yields_left:
 		emit_signal("all_completed")
-
