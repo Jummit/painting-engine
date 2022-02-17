@@ -5,7 +5,7 @@ onready var _uv_viewport : Viewport = $UVViewport
 onready var _seams_viewport : Viewport = $SeamsViewport
 onready var _seams_rect : TextureRect = $SeamsViewport/SeamsRect
 
-func generate(mesh : Mesh) -> Texture:
+func generate(mesh : Mesh) -> ViewportTexture:
 	_mesh_instance.mesh = mesh
 	_uv_viewport.render_target_update_mode = Viewport.UPDATE_ONCE
 	yield(VisualServer, "frame_post_draw")
