@@ -77,9 +77,9 @@ anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = -263.0
-margin_top = 13.0
+margin_top = 7.0
 margin_right = -14.0
-margin_bottom = -18.0
+margin_bottom = -6.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -106,7 +106,7 @@ __meta__ = {
 [node name="BrushPropertyPanel" parent="SideBar/VBoxContainer" instance=ExtResource( 8 )]
 margin_top = 18.0
 margin_right = 238.0
-margin_bottom = 563.0
+margin_bottom = 581.0
 size_flags_vertical = 3
 script = ExtResource( 3 )
 
