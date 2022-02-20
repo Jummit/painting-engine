@@ -40,9 +40,7 @@ yield(Awaiter.new(painter.redo()), "done")
 # Color picking
 # Backface painting
 # Repainting with higher resolution
-# Don't add full opacity in stroke
 # Position jitter
-# Clear texture folder on start
 # Explicit surface selection
 
 # Possibilities:
