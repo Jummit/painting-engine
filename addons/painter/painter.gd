@@ -50,7 +50,6 @@ yield(Awaiter.new(painter.redo()), "done")
 signal paint_completed
 
 var brush : Brush
-var session : Array
 
 # Emitted after the stored results are applied to the paint viewports.
 signal _results_loaded
@@ -89,6 +88,10 @@ var _result_changed := false
 var _next_size := randf()
 # Next random angle.
 var _next_angle := randf()
+# List of paint operations.
+var _session : Array
+# The paint operations of the current stroke.
+var _stroke_operations : Array
 
 # Path to the folder of textures used for undo/redo.
 const TEXTURE_PATH := "user://undo_textures/{painter}"
@@ -197,7 +200,7 @@ func finish_stroke() -> void:
 		yield(Awaiter.new(_get_channel_painter(channel).finish_stroke()),
 				"done")
 	var thread := Thread.new()
-	thread.start(self, "_store_results_threaded", thread)
+	thread.start(self, "_create_stroke_action", thread)
 	_result_changed = false
 	yield(self, "_results_loaded")
 
@@ -258,6 +261,7 @@ func _assert_ready() -> void:
 # Perform a paint operation.
 func _do_paint(operation : PaintOperation) -> void:
 	_painting = true
+	_stroke_operations.append(operation)
 	var yielder := MultiYielder.new()
 	var transforms := _get_brush_transforms(operation.screen_position,
 			operation.pressure)
@@ -355,14 +359,27 @@ func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 
 # Undo/Redo
 
-# Perform `_store_results` on a thread as it uses slow file IO.
-func _store_results_threaded(thread : Thread) -> void:
-	var pack := _store_results()
+# Append the operations
+func _store_operations(operations : Array) -> void:
+	_session += operations
+
+
+# Remove the given number of operations from the session.
+func _remove_operations(count : int) -> void:
+	_session.resize(_session.size() - count)
+
+
+# Create a stroke action which stores the results so they can be applied when
+# the stroke is undone. Perform `_store_results` on a thread as it uses slow
+# file IO.
+func _create_stroke_action(thread : Thread) -> void:
 	_undo_redo.create_action("Paintstroke")
+	_undo_redo.add_do_method(self, "_store_operations", _stroke_operations)
+	_undo_redo.add_undo_method(self, "_remove_operations", _stroke_operations.size())
+	var pack := _store_results()
 	_undo_redo.add_do_method(self, "_load_results", pack)
 	_undo_redo.add_undo_method(self, "_load_results", _current_pack)
 	_undo_redo.commit_action()
-	_current_pack = pack
 	thread.call_deferred("wait_to_finish")
 
 
@@ -377,6 +394,7 @@ func _store_results() -> TexturePackStore.Pack:
 # Set the pack of textures as the current result. Emits `_result_loaded` when
 # finished.
 func _load_results(pack : TexturePackStore.Pack) -> void:
-	_current_pack = pack
-	yield(Awaiter.new(clear_with(pack.get_textures())), "done")
+	if pack != _current_pack:
+		_current_pack = pack
+		yield(Awaiter.new(clear_with(pack.get_textures())), "done")
 	emit_signal("_results_loaded")
