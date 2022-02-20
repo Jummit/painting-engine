@@ -82,8 +82,4 @@ void fragment() {
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
 	if (ALPHA > 0.0)
 		ALBEDO /= ALPHA;
-	
-//	ALPHA = 1.0;
-//	ALBEDO = vec3(view_uv, 1.0);
-//	ALBEDO = texture(albedo, view_uv).rgb;
 }
