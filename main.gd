@@ -56,11 +56,12 @@ func _unhandled_key_input(event : InputEventKey) -> void:
 func handle_stencil_input(event : InputEvent) -> bool:
 	var mouse := get_viewport().get_mouse_position()
 	var viewport_size := get_viewport().size
+	var viewport_ratio := viewport_size.normalized()
 	if event.is_action("change_stencil") or event.is_action("grab_stencil"):
 		change_start = mouse
 		last_stencil = painter.brush.stencil_transform
-		last_stencil.x *= viewport_size.normalized().x
-		last_stencil.y *= viewport_size.normalized().y
+		last_stencil.x *= viewport_ratio.x
+		last_stencil.y *= viewport_ratio.y
 	if Input.is_action_pressed("grab_stencil"):
 		painter.brush.stencil_transform.origin = last_stencil.origin\
 			+ (mouse - change_start) / viewport_size
@@ -75,8 +76,8 @@ func handle_stencil_input(event : InputEvent) -> bool:
 		var start_scale := change_start.distance_to(stencil_pos)
 		var scale := last_stencil.get_scale().x\
 				- (start_scale - mouse.distance_to(stencil_pos)) / 1000.0
-		painter.brush.stencil_transform.x /= viewport_size.normalized().x / scale
-		painter.brush.stencil_transform.y /= viewport_size.normalized().y / scale
+		painter.brush.stencil_transform.x /= viewport_ratio.x / scale
+		painter.brush.stencil_transform.y /= viewport_ratio.y / scale
 		return true
 	return false
 
