@@ -20,7 +20,7 @@ uniform mat4 brush_transform;
 uniform vec4 brush_color = vec4(1.0);
 uniform sampler2D albedo : hint_white;
 uniform sampler2D tip : hint_white;
-uniform sampler2D stencil : hint_black;
+uniform sampler2D stencil : hint_white;
 uniform mat4 stencil_transform;
 uniform bool erase = false;
 uniform sampler2D previous;
