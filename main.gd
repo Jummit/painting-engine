@@ -53,6 +53,22 @@ func _unhandled_key_input(event : InputEventKey) -> void:
 		painter.undo()
 
 
+func _on_SaveButton_pressed() -> void:
+	file_dialog.popup()
+
+
+func _on_FileDialog_file_selected(path : String) -> void:
+	var data := painter.get_result(0).get_data()
+	data.convert(Image.FORMAT_RGBA8)
+	data.save_png(path)
+
+
+func _on_MeshOptionButton_item_selected(index : int) -> void:
+	paintable_model.mesh = load("res://assets/models/%s.obj" %\
+			mesh_option_button.get_item_text(index).to_lower())
+	setup_painter()
+
+
 func handle_stencil_input(event : InputEvent) -> bool:
 	var mouse := get_viewport().get_mouse_position()
 	var viewport_size := get_viewport().size
@@ -109,22 +125,6 @@ func handle_brush_input(event : InputEvent) -> bool:
 		painter.brush.size = clamp(change_start_value\
 			+ (event.position.x - change_start.x) / 100.0, 0.05, 3.0)
 	return false
-
-
-func _on_SaveButton_pressed() -> void:
-	file_dialog.popup()
-
-
-func _on_FileDialog_file_selected(path : String) -> void:
-	var data := painter.get_result(0).get_data()
-	data.convert(Image.FORMAT_RGBA8)
-	data.save_png(path)
-
-
-func _on_MeshOptionButton_item_selected(index : int) -> void:
-	paintable_model.mesh = load("res://assets/models/%s.obj" %\
-			mesh_option_button.get_item_text(index).to_lower())
-	setup_painter()
 
 
 func setup_painter() -> void:
