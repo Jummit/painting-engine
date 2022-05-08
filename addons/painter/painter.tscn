@@ -1,19 +1,19 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=3 format=3 uid="uid://dbk1buqfb7o04"]
 
-[ext_resource path="res://addons/painter/painter.gd" type="Script" id=1]
-[ext_resource path="res://addons/painter/seams/seams_texture_generator.tscn" type="PackedScene" id=2]
+[ext_resource type="Script" path="res://addons/painter/painter.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://nay6w24wfh4q" path="res://addons/painter/seams/seams_texture_generator.tscn" id="2"]
 
 [node name="Painter" type="Node"]
-script = ExtResource( 1 )
+script = ExtResource( "1" )
 
 [node name="ChannelPainters" type="Node" parent="."]
 
-[node name="SeamsTextureGenerator" parent="." instance=ExtResource( 2 )]
+[node name="SeamsTextureGenerator" parent="." instance=ExtResource( "2" )]
 
-[node name="ClickViewport" type="Viewport" parent="."]
-own_world = true
+[node name="ClickViewport" type="SubViewport" parent="."]
 physics_object_picking = true
+size_2d_override = Vector2i(512, 512)
 
-[node name="StaticBody" type="StaticBody" parent="ClickViewport"]
+[node name="StaticBody3D" type="StaticBody3D" parent="ClickViewport"]
 
-[node name="CollisionShape" type="CollisionShape" parent="ClickViewport/StaticBody"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ClickViewport/StaticBody3D"]

@@ -1,7 +1,6 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=2 format=3 uid="uid://dpgw4kyrjad8k"]
 
-[sub_resource type="QuadMesh" id=4]
+[sub_resource type="QuadMesh" id="4"]
 
-[node name="BrushPreview" type="MeshInstance"]
-mesh = SubResource( 4 )
-material/0 = null
+[node name="BrushPreview" type="MeshInstance3D"]
+mesh = SubResource( "4" )

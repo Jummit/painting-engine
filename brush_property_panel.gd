@@ -1,8 +1,6 @@
 extends "res://addons/property_panel/property_panel.gd"
 
-"""
-Panel exposing brush properties.
-"""
+# Panel exposing brush properties.
 
 var _editable_brush : EditableBrush
 
@@ -20,10 +18,10 @@ const Brush = preload("addons/painter/brush.gd")
 class EditableBrush:
 	var brush
 
-	func _init(_brush) -> void:
+	func _init(_brush):
 		brush = _brush
 
-	func _set(property: String, value) -> bool:
+	func _set(property: StringName, value) -> bool:
 		match property:
 			"color":
 				brush.colors = [value]
@@ -50,7 +48,7 @@ class EditableBrush:
 					return false
 		return true
 
-	func _get(property: String):
+	func _get(property: StringName):
 		match property:
 			"color":
 				return brush.get_color(0)
@@ -70,8 +68,9 @@ class EditableBrush:
 				return brush.get(property)
 
 func _ready() -> void:
+	super._ready()
 	set_properties([
-		"Texture",
+		"Texture2D",
 		Properties.FilePathProperty.new("tip"),
 		Properties.FilePathProperty.new("texture"),
 		Properties.ColorProperty.new("color"),

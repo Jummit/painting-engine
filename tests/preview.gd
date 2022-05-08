@@ -1,8 +1,8 @@
 extends WATTest
 
 var painter : Node
-var mesh_instance : MeshInstance
-var brush : Reference
+var mesh_instance : MeshInstance3D
+var brush : RefCounted
 
 const WINDOW_SIZE := Vector2(512, 512)
 const Assertion = preload("res://addons/WAT/assertions/assertion.gd")
@@ -10,16 +10,16 @@ const Assertion = preload("res://addons/WAT/assertions/assertion.gd")
 func start():
 	OS.window_size = WINDOW_SIZE
 
-	var camera := Camera.new()
+	var camera := Camera3D.new()
 	camera.translate(Vector3.BACK * 2)
 	add_child(camera)
 	camera.make_current()
 	
-	mesh_instance = MeshInstance.new()
+	mesh_instance = MeshInstance3D.new()
 	mesh_instance.mesh = load("res://assets/models/monkey.obj")
 	add_child(mesh_instance)
 
-	painter = load("res://addons/painter/painter.tscn").instance()
+	painter = load("res://addons/painter/painter.tscn").instantiate()
 	add_child(painter)
 	brush = load("res://addons/painter/brush.gd").new()
 	painter.init(mesh_instance, Vector2(10,10), 2, brush, [])
@@ -34,7 +34,7 @@ func test_position_in_empty_space():
 	var transforms : Array = painter.get_brush_preview_transforms(
 			Vector2(3,3), 1, true)
 	transform_equal_approx(transforms.front(),
-			Transform().translated(Vector3(-2.47, 1.39, 0)))
+			Transform3D().translated(Vector3(-2.47, 1.39, 0)))
 
 
 func test_single_mirror_symmetry():

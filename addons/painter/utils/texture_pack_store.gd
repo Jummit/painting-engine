@@ -1,13 +1,11 @@
-extends Reference
+extends RefCounted
 
-"""
-Utility for saving and loading textures to memory or disk.
-"""
+## Utility for saving and loading textures to memory or disk.
 
-# The maximum `Pack` objects stored in ram. When this value is exceeded the
-# oldest packs will be saved to disk.
+## The maximum `Pack` objects stored in ram. When this value is exceeded the
+## oldest packs will be saved to disk.
 var max_packs_in_memory := 10
-# The maximum packs to save to disk before the oldest are deleted.
+## The maximum packs to save to disk before the oldest are deleted.
 var max_packs_on_disk := 30
 
 var _packs : Array
@@ -15,21 +13,21 @@ var _last_id := 0
 var _save_threads : Dictionary
 var _path : String
 
-class Pack extends Reference:
+class Pack extends RefCounted:
 	var textures : Array
 	var file_count : int
 	var file_on_disk : String
-	var save_func : FuncRef
+	var save : Callable
 	var id : int
 	var thread : Thread
 	
-	func _init(_textures, _id):
+	func _init(_textures,_id):
 		textures = _textures
 		file_count = textures.size()
 		id = _id
 	
 	func get_textures() -> Array:
-		if not textures and file_on_disk:
+		if textures.is_empty() and not file_on_disk.is_empty():
 			# Move textures back to memory.
 			var dir := Directory.new()
 			for file_num in file_count:
@@ -37,22 +35,22 @@ class Pack extends Reference:
 				image.load(file_on_disk % file_num)
 				var texture := ImageTexture.new()
 				texture.create_from_image(image)
-				dir.remove(file_on_disk % file_num)
+				dir.remove_at(file_on_disk % file_num)
 				textures.append(texture)
 		return textures
 	
 	func save_to_disk() -> void:
-		save_func.call_func(self)
+		save.call(self)
 	
 	func erase_from_disk() -> void:
-		if not file_on_disk:
+		if file_on_disk.is_empty():
 			return
 		var dir := Directory.new()
 		for texture_num in file_count:
-			dir.remove(file_on_disk % texture_num)
+			dir.remove_at(file_on_disk % texture_num)
 	
 	func get_path_on_disk(texture : int) -> String:
-		if not file_on_disk:
+		if file_on_disk.is_empty():
 			return ""
 		return file_on_disk % str(texture - 1)
 	
@@ -63,27 +61,28 @@ class Pack extends Reference:
 #			erase_from_disk()
 			var dir := Directory.new()
 			for texture_num in file_count:
-				dir.remove(file_on_disk % texture_num)
+				dir.remove_at(file_on_disk % texture_num)
 
 func _init(path : String):
 	_path = path.plus_file("/%s_%s.png")
 	var dir := Directory.new()
+	dir.open("")
 	dir.remove(path)
 	dir.make_dir_recursive(path)
 
 
-# Add a new list of textures and return a pack that can be used to load textures
-# at a later point in time.
+## Add a new list of textures and return a pack that can be used to load textures
+## at a later point in time.
 func add_textures(new_textures : Array) -> Pack:
 	var textures := []
 	for texture in new_textures:
 		if texture is ViewportTexture:
 			var image_texture := ImageTexture.new()
-			image_texture.create_from_image(texture.get_data())
+			image_texture.create_from_image(texture.get_image())
 			texture = image_texture
 		textures.append(texture)
 	var new_pack := Pack.new(textures, _last_id)
-	new_pack.save_func = funcref(self, "_save_pack")
+	new_pack.save = self._save_pack
 	_packs.append(weakref(new_pack))
 	_last_id += 1
 	_save_to_disk_if_needed()
@@ -101,7 +100,7 @@ func _get_packs(in_memory : bool) -> Array:
 	var packs := []
 	for pack in _packs:
 		if pack.get_ref():
-			var pack_in_memory : bool = not (pack.get_ref() as Pack).file_on_disk\
+			var pack_in_memory : bool = (pack.get_ref() as Pack).file_on_disk.is_empty()\
 				and not pack.get_ref().id in _save_threads
 			if in_memory == pack_in_memory:
 				packs.append(pack)
@@ -114,18 +113,18 @@ func _save_to_disk_if_needed() -> void:
 		packs_in_memory.front().get_ref().save_to_disk()
 
 
-# Function called by a pack so threads can be handled here, to avoid packs with
-# unfinished threads being freed.
+## Function called by a pack so threads can be handled here, to avoid packs with
+## unfinished threads being freed.
 func _save_pack(pack : Pack):
 	var thread := Thread.new()
 	_save_threads[pack.id] = thread
-	thread.start(self, "_threaded_save_to_disk", pack)
+	thread.start(_threaded_save_to_disk, pack)
 
 
 func _threaded_save_to_disk(pack : Pack) -> void:
 	var path := _path % [pack.id, "%s"]
 	for texture_num in pack.textures.size():
-		(pack.textures[texture_num] as Texture).get_data().save_png(
+		(pack.textures[texture_num] as Texture2D).get_data().save_png(
 				path % texture_num)
 	pack.textures.clear()
 	pack.file_on_disk = path
@@ -138,9 +137,9 @@ func _save_thread_completed(pack_for : int):
 
 
 func cleanup() -> void:
-	# Because remove doesn't delete recursively, delete the packs one-by one.
+	# Because remove_at doesn't delete recursively, delete the packs one-by one.
 	var dir := Directory.new()
 	for pack in _packs:
 		if pack.get_ref():
 			pack.get_ref().erase_from_disk()
-	dir.remove(_path.get_base_dir())
+	dir.remove_at(_path.get_base_dir())

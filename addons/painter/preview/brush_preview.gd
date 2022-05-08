@@ -1,35 +1,41 @@
-extends Spatial
+extends Node3D
 
-"""
-Interactive in-viewport brush peview.
+## Interactive in-viewport brush peview.
 
-Uses the tip and first texture and color to show a preview of what the brush
-looks like.
-"""
+## Uses the tip and first texture and color to show a preview of what the brush
+## looks like.
 
 enum Appearance {
-	# A preview of what the brush will paint.
-	BRUSH,
-	# A neutral black-and-white striped circle.
-	CIRCLE,
+	BRUSH, ## A preview of what the brush will paint.
+	CIRCLE, ## A neutral black-and-white striped circle.
 }
 
-export(Appearance) var appearance := Appearance.BRUSH setget _set_appearance
-export var painter := NodePath("../Painter") setget _set_painter
+@export var appearance: Appearance = Appearance.BRUSH:
+	set(to):
+		appearance = to
+		for preview in _previews:
+			preview.set_surface_override_material(0, preload("brush_preview.material") if\
+					appearance == Appearance.BRUSH else\
+					preload("circle_preview.material"))
+@export var painter := NodePath("../Painter") :
+	set(to):
+		painter = to
+		if to:
+			_painter = get_node(painter)
 
-# If the preview should move with the mouse.
+## If the preview should move with the mouse.
 var follow_mouse := true
-
-var _painter : Painter
-# An array of `SingleBrushPreviews`.
-var _previews : Array
-var _brush_preview_material := ShaderMaterial.new()
 
 const Painter = preload("res://addons/painter/painter.gd")
 const Brush = preload("res://addons/painter/brush.gd")
 
+var _painter : Painter
+## An array of `SingleBrushPreviews`.
+var _previews : Array
+var _brush_preview_material := ShaderMaterial.new()
+
 func _ready():
-	_set_appearance(appearance)
+	appearance = appearance
 
 
 func _input(event : InputEvent) -> void:
@@ -40,7 +46,7 @@ func _input(event : InputEvent) -> void:
 		return
 
 	var pressure := 1.0
-	if event is InputEventMouseMotion and event.button_mask == BUTTON_LEFT\
+	if event is InputEventMouseMotion and event.button_mask == MOUSE_BUTTON_LEFT\
 			and brush.size_pen_pressure:
 		pressure = event.pressure
 	var transforms : Array = _painter.get_brush_preview_transforms(
@@ -48,10 +54,10 @@ func _input(event : InputEvent) -> void:
 	
 	# Add necessary amount of previews.
 	while _previews.size() < transforms.size():
-		var new := preload("single_brush_preview.tscn").instance()
+		var new := preload("single_brush_preview.tscn").instantiate()
 		add_child(new)
 		_previews.append(new)
-	_set_appearance(appearance)
+	appearance = appearance
 
 	# Remove excess previews.
 	while _previews.size() > transforms.size():
@@ -59,9 +65,9 @@ func _input(event : InputEvent) -> void:
 
 	# Update transform and appearance.
 	for transform_num in transforms.size():
-		var preview : MeshInstance = _previews[transform_num]
-		var material := preview.get_surface_material(0)
-		var brush_transform : Transform = transforms[transform_num]
+		var preview : MeshInstance3D = _previews[transform_num]
+		var material := preview.get_surface_override_material(0)
+		var brush_transform : Transform3D = transforms[transform_num]
 		if follow_mouse:
 			preview.transform = brush_transform
 		else:
@@ -72,17 +78,3 @@ func _input(event : InputEvent) -> void:
 			material.set_shader_param("albedo", brush.get_texture(0))
 			material.set_shader_param("color", brush.get_color(0))
 			material.set_shader_param("tip", brush.tip)
-
-
-func _set_appearance(to):
-	appearance = to
-	for preview in _previews:
-		preview.set_surface_material(0, preload("brush_preview.material") if\
-				appearance == Appearance.BRUSH else\
-				preload("circle_preview.material"))
-
-
-func _set_painter(to):
-	painter = to
-	if to:
-		_painter = get_node(painter)

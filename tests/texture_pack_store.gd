@@ -1,6 +1,6 @@
 extends WATTest
 
-var red : Texture = load("res://tests/red.png")
+var red : Texture2D = load("res://tests/red.png")
 var store : TexturePackStore
 
 const FOLDER = "/tmp/painter_test_textures"
@@ -9,14 +9,14 @@ const FileUtils = preload("res://addons/file_utils/file_utils.gd")
 
 func pre() -> void:
 	store = TexturePackStore.new(FOLDER)
-	yield(until_timeout(0.01), YIELD)
+	await until_timeout(0.01).YIELD
 
 
 func post() -> void:
 	store.cleanup()
-	yield(until_timeout(0.01), YIELD)
+	await until_timeout(0.01).YIELD
 	FileUtils.remove_recursive(FOLDER)
-	yield(until_timeout(0.01), YIELD)
+	await until_timeout(0.01).YIELD
 
 
 func test_in_memory() -> void:
@@ -39,19 +39,19 @@ func test_multiple_textures_in_memory() -> void:
 
 
 func test_folder_is_created() -> void:
-	describe("Texture folder is created")
+	describe("Texture2D folder is created")
 	asserts.folder_exists(FOLDER, "Created texture folder")
 
 
 func test_folder_is_removed_on_cleanup() -> void:
-	describe("Texture folder gets deleted on cleanup")
+	describe("Texture2D folder gets deleted on cleanup")
 	store.max_packs_in_memory = 1
 	store.add_textures([red])
 	store.add_textures([red])
-	yield(until_timeout(0.01), YIELD)
+	await until_timeout(0.01).YIELD
 	store.cleanup()
-	yield(until_timeout(0.01), YIELD)
-	asserts.folder_does_not_exist(FOLDER, "Texture folder was deleted")
+	await until_timeout(0.01).YIELD
+	asserts.folder_does_not_exist(FOLDER, "Texture2D folder was deleted")
 
 
 func test_save_to_disk() -> void:
@@ -59,7 +59,7 @@ func test_save_to_disk() -> void:
 	store.max_packs_in_memory = 1
 	var pack := store.add_textures([red])
 	store.add_textures([red])
-	yield(until_timeout(0.01), YIELD)
+	await until_timeout(0.01).YIELD
 	asserts.file_exists(pack.get_path_on_disk(1), "Pack is saved to disk")
 
 
@@ -69,6 +69,6 @@ func test_deletion_after_retrieval() -> void:
 	var a := store.add_textures([red])
 	var path := a.get_path_on_disk(1)
 	store.add_textures([red])
-	yield(until_timeout(0.01), YIELD)
+	await until_timeout(0.01).YIELD
 	a.get_textures()
 	asserts.file_does_not_exist(path, "Pack is deleted after being loaded")

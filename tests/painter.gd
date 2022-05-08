@@ -4,10 +4,10 @@ extends WATTest
 # TODO: Test stencil
 
 var painter : Node
-var mesh_instance : MeshInstance
-var brush : Reference
-var result_1 : Texture
-var result_2 : Texture
+var mesh_instance : MeshInstance3D
+var brush : RefCounted
+var result_1 : Texture2D
+var result_2 : Texture2D
 
 const Awaiter = preload("res://addons/painter/utils/awaiter.gd")
 
@@ -18,25 +18,25 @@ const EYE_POS := RESULT_SIZE * Vector2(.9, .35)
 const SIDE_POS := RESULT_SIZE * Vector2(.2, .3)
 
 func pre():
-	var camera := Camera.new()
+	var camera := Camera3D.new()
 	camera.translate(Vector3.BACK * 2)
 	OS.window_size = WINDOW_SIZE
 	add_child(camera)
 	camera.make_current()
 	
-	mesh_instance = MeshInstance.new()
+	mesh_instance = MeshInstance3D.new()
 	mesh_instance.mesh = load("res://assets/models/monkey.obj")
 	add_child(mesh_instance)
 	
 	brush = load("res://addons/painter/brush.gd").new()
-	brush.colors = [null, Color.blue]
+	brush.colors = [null, Color.BLUE]
 	brush.textures = [load("tests/red.png")]
-	painter = load("res://addons/painter/painter.tscn").instance()
+	painter = load("res://addons/painter/painter.tscn").instantiate()
 	add_child(painter)
 	
-	yield(Awaiter.new(painter.init(mesh_instance, RESULT_SIZE, 2, brush, [Color.white, load("tests/red.png")])), "done")
-	result_1 = painter.get_result(0)
-	result_2 = painter.get_result(1)
+	await Awaiter.new(painter.init(mesh_instance, RESULT_SIZE, 2, brush, [Color.WHITE, load("tests/red.png")])).done
+	result_1 = painter.get_data(0)
+	result_2 = painter.get_data(1)
 
 
 func post():
@@ -50,103 +50,103 @@ func test_initialization():
 	asserts.is_Object(result_2, "Result 2 exists")
 	asserts.is_equal(result_1.get_size(), RESULT_SIZE, "Result size one is correct")
 	asserts.is_equal(result_2.get_size(), RESULT_SIZE, "Result size two is correct")
-	asserts_color_equal(get_pixelv(result_1, RESULT_SIZE / 2), Color.white, "First result is white")
-	asserts_color_equal(get_pixelv(result_2, RESULT_SIZE / 2), Color.red, "Second result is red")
+	asserts_color_equal(get_pixelv(result_1, RESULT_SIZE / 2), Color.WHITE, "First result is white")
+	asserts_color_equal(get_pixelv(result_2, RESULT_SIZE / 2), Color.RED, "Second result is red")
 
 
 func test_painting():
 	describe("Paint")
-	yield(Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)), "done")
-	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.red, "First result's face is painted red")
-	asserts_color_equal(get_pixelv(result_1, EYE_POS), Color.red, "First result's eye is painted red")
-	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.white, "First result's side is still white")
-	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.blue, "Second result's face is painted blue")
-	asserts_color_equal(get_pixelv(result_2, EYE_POS), Color.blue, "Second result's eye is painted blue")
-	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.red, "Second result's side is still red")
+	await Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)).done
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.RED, "First result's face is painted red")
+	asserts_color_equal(get_pixelv(result_1, EYE_POS), Color.RED, "First result's eye is painted red")
+	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.WHITE, "First result's side is still white")
+	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.BLUE, "Second result's face is painted blue")
+	asserts_color_equal(get_pixelv(result_2, EYE_POS), Color.BLUE, "Second result's eye is painted blue")
+	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.RED, "Second result's side is still red")
 
 
 func test_erasing():
 	describe("Erase")
 	painter.brush.erase = true
-	yield(Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)), "done")
+	await Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)).done
 	asserts.is_equal_or_less_than(get_pixelv(result_1, FACE_POS).a, 0.02, "First result's face is transparent")
 	asserts.is_equal_or_less_than(get_pixelv(result_2, FACE_POS).a, 0.02, "Second result's face is transparent")
-	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.white, "First result's side is still white")
-	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.red, "Second result's side is still red")
+	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.WHITE, "First result's side is still white")
+	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.RED, "Second result's side is still red")
 
 
 func test_undo_erasing():
 	describe("Undo an erase")
 	painter.brush.erase = true
-	yield(Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)), "done")
-	yield(Awaiter.new(painter.finish_stroke()), "done")
-	yield(Awaiter.new(painter.undo()), "done")
-	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.white, "First result's face is white again")
-	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.red, "Second result's face is red again")
-	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.white, "First result's side is still white")
-	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.red, "Second result's side is still red")
+	await Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)).done
+	await Awaiter.new(painter.finish_stroke()).done
+	await Awaiter.new(painter.undo()).done
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.WHITE, "First result's face is white again")
+	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.RED, "Second result's face is red again")
+	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.WHITE, "First result's side is still white")
+	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.RED, "Second result's side is still red")
 
 
 func test_redo_erasing():
 	describe("Redo an erase")
 	painter.brush.erase = true
-	yield(Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)), "done")
-	yield(Awaiter.new(painter.finish_stroke()), "done")
-	yield(Awaiter.new(painter.undo()), "done")
-	yield(Awaiter.new(painter.redo()), "done")
+	await Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)).done
+	await Awaiter.new(painter.finish_stroke()).done
+	await Awaiter.new(painter.undo()).done
+	await Awaiter.new(painter.redo()).done
 	asserts.is_equal_or_less_than(get_pixelv(result_1, FACE_POS).a, 0.02, "First result's face is transparent again")
 	asserts.is_equal_or_less_than(get_pixelv(result_2, FACE_POS).a, 0.02, "Second result's face is transparent again")
-	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.white, "First result's side is white again")
-	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.red, "Second result's side is red again")
+	asserts_color_equal(get_pixelv(result_1, SIDE_POS), Color.WHITE, "First result's side is white again")
+	asserts_color_equal(get_pixelv(result_2, SIDE_POS), Color.RED, "Second result's side is red again")
 
 
 func test_undo():
 	describe("Undo a stroke")
-	yield(Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)), "done")
-	yield(Awaiter.new(painter.finish_stroke()), "done")
-	yield(Awaiter.new(painter.undo()), "done")
-	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.white, "First result's face is white again")
-	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.red, "Second result's face is red again")
+	await Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)).done
+	await Awaiter.new(painter.finish_stroke()).done
+	await Awaiter.new(painter.undo()).done
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.WHITE, "First result's face is white again")
+	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.RED, "Second result's face is red again")
 
 
 func test_redo():
 	describe("Redo a stroke")
-	yield(Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)), "done")
-	yield(Awaiter.new(painter.finish_stroke()), "done")
-	yield(Awaiter.new(painter.undo()), "done")
-	yield(Awaiter.new(painter.redo()), "done")
-	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.red, "First result's face is red again")
-	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.blue, "Second result's face is blue again")
+	await Awaiter.new(painter.paint(WINDOW_SIZE * 0.5)).done
+	await Awaiter.new(painter.finish_stroke()).done
+	await Awaiter.new(painter.undo()).done
+	await Awaiter.new(painter.redo()).done
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.RED, "First result's face is red again")
+	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.BLUE, "Second result's face is blue again")
 
 
 func test_clear_with_color():
 	describe("Clear the painter with a single color")
-	yield(Awaiter.new(painter.clear_with([Color.green])), "done")
-	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.green, "First result's face is green")
+	await Awaiter.new(painter.clear_with([Color.GREEN])).done
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.GREEN, "First result's face is green")
 
 
 func test_clearing_multiple_channels():
 	describe("Clear multiple channels of the painter")
-	yield(Awaiter.new(painter.clear_with([Color.green, load("res://tests/red.png")])), "done")
-	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.green, "First result's face is green")
-	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.red, "Second result's face is red")
+	await Awaiter.new(painter.clear_with([Color.GREEN, load("res://tests/red.png")])).done
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.GREEN, "First result's face is green")
+	asserts_color_equal(get_pixelv(result_2, FACE_POS), Color.RED, "Second result's face is red")
 
 
 func test_clear_with_image():
 	describe("Clear the painter with an image")
-	yield(Awaiter.new(painter.clear_with([load("res://tests/red.png")])), "done")
-	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.red, "First result's face is red")
+	await Awaiter.new(painter.clear_with([load("res://tests/red.png")])).done
+	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color.RED, "First result's face is red")
 
 
 func test_clear_with_transparent_color():
 	describe("Clear the painter with a color that has an alpha value below zero")
-	yield(Awaiter.new(painter.clear_with([Color(1, 0, 0, 0.5)])), "done")
+	await Awaiter.new(painter.clear_with([Color(1, 0, 0, 0.5)])).done
 	asserts_color_equal(get_pixelv(result_1, FACE_POS), Color(1, 0, 0, 0.5), "First result's face is transparent")
 
 
-func get_pixelv(texture : Texture, pos : Vector2) -> Color:
+func get_pixelv(texture : Texture2D, pos : Vector2) -> Color:
 	var image := texture.get_data()
-	image.lock()
+	false # image.lock() # TODOConverter40, image no longer require locking, `false` helps to not broke one line if/else, so can be freely removed
 	return image.get_pixelv(pos)
 
 

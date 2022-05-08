@@ -1,20 +1,21 @@
 [remap]
 
 importer="wavefront_obj"
+importer_version=1
 type="Mesh"
-path="res://.import/monkey.obj-f035873cafcc758ff9ecf524c6ebb539.mesh"
+uid="uid://ow1ytnj74vl"
+path="res://.godot/imported/monkey.obj-f035873cafcc758ff9ecf524c6ebb539.mesh"
 
 [deps]
 
-files=[ "res://.import/monkey.obj-f035873cafcc758ff9ecf524c6ebb539.mesh" ]
+files=["res://.godot/imported/monkey.obj-f035873cafcc758ff9ecf524c6ebb539.mesh"]
 
 source_file="res://assets/models/monkey.obj"
-dest_files=[ "res://.import/monkey.obj-f035873cafcc758ff9ecf524c6ebb539.mesh", "res://.import/monkey.obj-f035873cafcc758ff9ecf524c6ebb539.mesh" ]
+dest_files=["res://.godot/imported/monkey.obj-f035873cafcc758ff9ecf524c6ebb539.mesh", "res://.godot/imported/monkey.obj-f035873cafcc758ff9ecf524c6ebb539.mesh"]
 
 [params]
 
 generate_tangents=true
-scale_mesh=Vector3( 1, 1, 1 )
-offset_mesh=Vector3( 0, 0, 0 )
-octahedral_compression=true
-optimize_mesh_flags=4286
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true

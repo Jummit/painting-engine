@@ -7,7 +7,7 @@ func test_one_yield() -> void:
 	describe("MultiYielder works when given one function to wait for")
 	var yielder := MultiYielder.new()
 	yielder.add(do_something(), "completed")
-	yield(yielder, "all_completed")
+	await yielder.all_completed
 	asserts.auto_pass("Yielded for multiple functions")
 
 
@@ -17,9 +17,9 @@ func test_multiple_yields() -> void:
 	yielder.add(do_something(), "completed")
 	yielder.add(do_something(), "completed")
 	yielder.add(do_something(), "completed")
-	yield(yielder, "all_completed")
+	await yielder.all_completed
 	asserts.auto_pass("Yielded for multiple functions")
 
 
 func do_something():
-	yield(get_tree().create_timer(0.01 * randf()), "timeout")
+	await get_tree().create_timer(0.01 * randf()).timeout
