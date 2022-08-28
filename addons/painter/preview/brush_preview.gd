@@ -75,6 +75,7 @@ func _input(event : InputEvent) -> void:
 			preview.transform.basis = preview.transform.basis.orthonormalized()\
 					.scaled(brush_transform.basis.get_scale())
 		if appearance == Appearance.BRUSH:
+			print(brush.get_color(0))
 			material.set_shader_param("albedo", brush.get_texture(0))
 			material.set_shader_param("color", brush.get_color(0))
 			material.set_shader_param("tip", brush.tip)

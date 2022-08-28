@@ -16,13 +16,13 @@ const FileUtils = preload("res://addons/file_utils/file_utils.gd")
 const Brush = preload("addons/painter/brush.gd")
 
 class EditableBrush:
-	var brush
+	var brush: Brush
 
 	func _init(_brush):
 		brush = _brush
-
+	
 	func _set(property: StringName, value) -> bool:
-		match property:
+		match str(property):
 			"color":
 				brush.colors = [value]
 			"texture":
@@ -49,7 +49,7 @@ class EditableBrush:
 		return true
 
 	func _get(property: StringName):
-		match property:
+		match str(property):
 			"color":
 				return brush.get_color(0)
 			"texture":

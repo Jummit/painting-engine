@@ -88,10 +88,10 @@ func handle_stencil_input(event : InputEvent) -> bool:
 				last_stencil.get_rotation() + (new_rot - start_rotation),
 				painter.brush.stencil_transform.origin)
 		var start_scale := change_start.distance_to(stencil_pos)
-		var scale := last_stencil.get_scale().x\
+		var stencil_scale := last_stencil.get_scale().x\
 				- (start_scale - mouse.distance_to(stencil_pos)) / 1000.0
-		painter.brush.stencil_transform.x /= viewport_ratio.x / scale
-		painter.brush.stencil_transform.y /= viewport_ratio.y / scale
+		painter.brush.stencil_transform.x /= viewport_ratio.x / stencil_scale
+		painter.brush.stencil_transform.y /= viewport_ratio.y / stencil_scale
 		return true
 	return false
 
@@ -141,7 +141,7 @@ func setup_painter() -> void:
 	for channel in CHANNELS.size():
 		paintable_model.material_override[
 				CHANNELS.keys()[channel] + "_texture"] =\
-				painter.get_data(channel)
+				painter.get_result(channel)
 	
 	brush_preview.painter = painter.get_path()
 	stencil_preview.painter = painter.get_path()

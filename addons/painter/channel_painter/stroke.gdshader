@@ -18,9 +18,9 @@ The brush tip is then projected into surface-space using that transform.
 
 uniform mat4 brush_transform;
 uniform vec4 brush_color = vec4(1.0);
-uniform sampler2D albedo : hint_white;
-uniform sampler2D tip : hint_white;
-uniform sampler2D stencil : hint_white;
+uniform sampler2D albedo : hint_default_white;
+uniform sampler2D tip : hint_default_white;
+uniform sampler2D stencil : hint_default_white;
 uniform mat4 stencil_transform;
 uniform bool erase = false;
 uniform sampler2D previous;

@@ -117,7 +117,7 @@ func finish_stroke() -> void:
 	_mesh_instance.show()
 
 
-func get_data() -> ViewportTexture:
+func get_result() -> ViewportTexture:
 	return _result_viewport.get_texture()
 
 

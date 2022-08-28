@@ -6,23 +6,17 @@ extends Node
 ## 3D meshes like albedo, normal etc. using various brush parameters.
 ## It supports undo/redo, radial and mirrored symmetry, tangent-space painting,
 ## erasing, size and angle jitter, follow path, clearing the results with colors
-## or textures and showing a brush preview by adding a `brush_preview.tscn`.
+## or textures and showing a brush preview by adding a [code]brush_preview.tscn[/code].
 ## 
-## ## Usage
+## [b]Usage[/b]
 ## 
-## ```gdscript
+## [codeblock]
 ## painter.init(model, Vector2(1024, 1024), 4, brush, [Color.WHITE])
 ## painter.paint(Vector2(10, 10))
 ## painter.finish_stroke()
-## var albedo = painter.get_data(0)
+## var albedo = painter.get_result(0)
 ## painter.cleanup()
-## ```
-## 
-## All functions that take time yield and can be waited for like this:
-## 
-## ```gdscript
-## await Awaiter.new(painter.redo()).done
-## ```
+## [/codeblock]
 
 # TODO:
 # Reimplement stencils
@@ -42,7 +36,9 @@ extends Node
 # Explicit surface selection
 
 # Possibilities:
-# Only render region and update with `get_tab_alignment.texture_set_data_partial`.
+# Persistent undo-redo
+# Batch rendering
+# Only render region and update with `texture_set_data_partial`.
 # How to find out which areas are painted though?
 
 signal paint_completed
@@ -50,55 +46,55 @@ signal paint_completed
 const Brush = preload("brush.gd")
 const TexturePackStore = preload("utils/texture_pack_store.gd")
 const ChannelPainter = preload("channel_painter/channel_painter.gd")
-const CameraState = preload("res://addons/painter/camera_state.gd")
-const PaintOperation = preload("res://addons/painter/paint_operation.gd")
+const CameraState = preload("camera_state.gd")
+const PaintOperation = preload("paint_operation.gd")
 
 var brush : Brush
 ## The brush settings used for painting the model.
 
-## Emitted after the stored results are applied to the paint viewports.
+# Emitted after the stored results are applied to the paint viewports.
 signal _results_loaded
 
 # Initial State
 
-## The model being painted. The MeshInstance3D is used to determine the transform
+# The model being painted. The MeshInstance3D is used to determine the transform
 # and mesh.
 var _model : MeshInstance3D
-## The size of the resulting texture. Preferably square with the width and hight
+# The size of the resulting texture. Preferably square with the width and hight
 # being a power of two.
 var _result_size : Vector2
 var _undo_redo := UndoRedo.new()
-## Util for saving and loading sets of textures to memory/disk.
+# Util for saving and loading sets of textures to memory/disk.
 # Used for undo/redo.
 var _texture_store : TexturePackStore
-## Utility texture used by the result shader to eliminate seams.
+# Utility texture used by the result shader to eliminate seams.
 var _seams_texture : Texture2D
-## The number of painting viewports available.
+# The number of painting viewports available.
 var _channels : int
-## If `finish_stroke()` was called while a paint operation was in progress. If
+# If `finish_stroke()` was called while a paint operation was in progress. If
 # true, `finish_stroke()` will be called after the operation is completed.
 var _finish_stroke_when_done : bool
-## If a paint operation is in progress.
+# If a paint operation is in progress.
 var _painting : bool
 
 # Runtime State
 
-## The set of textures that the model currently has applied.
-var _current_pack : TexturePackStore.Pack
-## While the stroke is not finished this stores where the user last painted.
+# The set of textures that the model currently has applied.
+var _current_pack# : TexturePackStore.Pack
+# While the stroke is not finished this stores where the user last painted.
 var _last_transform : Transform3D
-## Stores if the user successfully painted since the last stroke.
+# Stores if the user successfully painted since the last stroke.
 var _result_changed := false
-## Next random size.
+# Next random size.
 var _next_size := randf()
-## Next random angle.
+# Next random angle.
 var _next_angle := randf()
-## List of paint operations.
+# List of paint operations.
 var _session : Array
-## The paint operations of the current stroke.
+# The paint operations of the current stroke.
 var _stroke_operations : Array
 
-## Path3D to the folder of textures used for undo/redo.
+## Path to the folder of textures used for undo/redo.
 const TEXTURE_PATH := "user://undo_textures/{painter}"
 
 @onready var _channel_painters : Node = $ChannelPainters
@@ -113,9 +109,9 @@ func _notification(what : int) -> void:
 
 
 ## Set up the painter using a mesh, the size of the painted textures, how many
-# channels (textures) to paint, the brush and optionally an array of colors/
-# textures that will be used as the starting texture.
-# Should be called before doing anything else.
+## channels (textures) to paint, the brush and optionally an array of colors/
+## textures that will be used as the starting texture.
+## Should be called before doing anything else.
 func init(model : MeshInstance3D, result_size := Vector2(1024, 1024), channels := 1,
 		initial_brush : Brush = null, start_values := []) -> void:
 	_model = model
@@ -143,10 +139,10 @@ func clear_with(values : Array) -> void:
 
 
 ## Returns the painted result of the given channel.
-func get_data(channel : int) -> ViewportTexture:
+func get_result(channel : int) -> ViewportTexture:
 	_assert_ready()
-	assert(channel <= _channels) #,"Channel out of bounds: %s" % channel)
-	var texture := _get_channel_painter(channel).get_data()
+	assert(channel <= _channels, "Channel out of bounds")
+	var texture := _get_channel_painter(channel).get_result()
 	return texture
 
 
@@ -177,7 +173,7 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 		_finish_stroke_when_done = false
 
 
-## Add a new stroke which can be undone using `undo`.
+## Add a new stroke which can be undone using [method]undo[/method].
 func finish_stroke() -> void:
 	_assert_ready()
 	_last_transform = Transform3D()
@@ -187,13 +183,13 @@ func finish_stroke() -> void:
 		_finish_stroke_when_done = true
 		# Still wait for the result to be stored so this function can savely
 		# be waited upon.
-		await self._results_loaded
+		await _results_loaded
 	for channel in _channels:
 		await _get_channel_painter(channel).finish_stroke()
 	var thread := Thread.new()
-	thread.start(_create_stroke_action, thread)
+	thread.start(_create_stroke_action.bind(thread))
 	_result_changed = false
-	await self._results_loaded
+	await _results_loaded
 
 
 ## Redo the last paintstroke added by calling `finish_stroke`.
@@ -202,7 +198,7 @@ func undo() -> bool:
 	if _painting:
 		return false
 	var result := _undo_redo.undo()
-	await self._results_loaded
+	await _results_loaded
 	return result
 
 
@@ -235,21 +231,21 @@ func cleanup() -> void:
 	_texture_store.cleanup()
 
 
-## Starting from nothing, retrace the painting steps with the specified
-## resolution. This could take a while.
+# Starting from nothing, retrace the painting steps with the specified
+# resolution. This could take a while.
 func repaint(resolution : Vector2) -> void:
 	_assert_ready()
 	pass
 
 
-## Assert that the painter was initialized before calling a method.
+# Assert that the painter was initialized before calling a method.
 func _assert_ready() -> void:
-	assert(_model) #,"Painter not initialized.")
+	assert(_model, "Painter not initialized.")
 
 
 # Painting
 
-## Perform a paint operation.
+# Perform a paint operation.
 func _do_paint(operation : PaintOperation) -> void:
 	_painting = true
 	_stroke_operations.append(operation)
@@ -264,15 +260,15 @@ func _do_paint(operation : PaintOperation) -> void:
 	emit_signal("paint_completed")
 
 
-## Returns the ChannelPainter of the given channel.
+# Returns the ChannelPainter of the given channel.
 func _get_channel_painter(channel : int) -> ChannelPainter:
 	return _channel_painters.get_child(channel) as ChannelPainter
 
 
 # Brush Placement
 
-## Returns the transforms for meshes that show where the brush would paint at a
-## given screen position. Used by the brush preview.
+# Returns the transforms for meshes that show where the brush would paint at a
+# given screen position. Used by the brush preview.
 func get_brush_preview_transforms(screen_pos : Vector2,
 		pressure := 1.0, on_surface := true) -> Array:
 	var transforms := _get_brush_transforms(screen_pos, pressure, true)
@@ -284,7 +280,7 @@ func get_brush_preview_transforms(screen_pos : Vector2,
 	return [Transform3D(basis, position)]
 
 
-## Returns the transform of the brush when 
+# Returns the transform of the brush when 
 # Returns an empty array if the brush didn't hit the mesh.
 # Pressure is required because it scales the transform if the brush is
 # configured to do so.
@@ -308,7 +304,7 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 	return brush.apply_symmetry(transform)
 
 
-## Returns the surface-space transform on the given screen position.
+# Returns the surface-space transform on the given screen position.
 func _get_transform_on_mesh_surface(screen_pos : Vector2) -> Transform3D:
 	var camera := _model.get_viewport().get_camera_3d()
 	var from := camera.project_ray_origin(screen_pos)
@@ -327,8 +323,8 @@ func _get_transform_on_mesh_surface(screen_pos : Vector2) -> Transform3D:
 	return Transform3D(basis, origin)
 
 
-## Returns a basis that points from a given point to another, keeping forward
-## the z axis.
+# Returns a basis that points from a given point to another, keeping forward
+# the z axis.
 static func _get_basis_pointed_towards(from : Vector3, to : Vector3,
 		forward : Vector3) -> Basis:
 	var z := forward
@@ -337,8 +333,8 @@ static func _get_basis_pointed_towards(from : Vector3, to : Vector3,
 	return Basis(x, y, z).orthonormalized()
 
 
-## Returns a basis that scales and rotates the brush transform according to the
-## brush and the pressure.
+# Returns a basis that scales and rotates the brush transform according to the
+# brush and the pressure.
 func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 	var random_scale : float = lerp(1.0, _next_size, brush.size_jitter)
 	var scale := brush.size * (pressure + 0.1)
@@ -350,19 +346,19 @@ func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 
 # Undo/Redo
 
-## Append the operations
+# Append the operations
 func _store_operations(operations : Array) -> void:
 	_session += operations
 
 
-## Remove the given number of operations from the session.
+# Remove the given number of operations from the session.
 func _remove_operations(count : int) -> void:
 	_session.resize(_session.size() - count)
 
 
-## Create a stroke action which stores the results so they can be applied when
-## the stroke is undone. Perform [_store_results] on a thread as it uses slow
-## file IO.
+# Create a stroke action which stores the results so they can be applied when
+# the stroke is undone. Perform [_store_results] on a thread as it uses slow
+# file IO.
 func _create_stroke_action(thread : Thread) -> void:
 	_undo_redo.create_action("Paintstroke")
 	_undo_redo.add_do_method(self, "_store_operations", _stroke_operations)
@@ -374,17 +370,17 @@ func _create_stroke_action(thread : Thread) -> void:
 	thread.call_deferred("wait_to_finish")
 
 
-## Add the channel results in the texture store and return the new pack.
+# Add the channel results in the texture store and return the new pack.
 func _store_results() -> TexturePackStore.Pack:
 	var results := []
 	for channel in _channels:
-		results.append(get_data(channel))
+		results.append(get_result(channel))
 	return _texture_store.add_textures(results)
 
 
-## Set the pack of textures as the current result. Emits [_result_loaded] when
-## finished.
-func _load_results(pack : TexturePackStore.Pack) -> void:
+# Set the pack of textures as the current result. Emits [_result_loaded] when
+# finished.
+func _load_results(pack) -> void:# : TexturePackStore.Pack) -> void:
 	if pack != _current_pack:
 		_current_pack = pack
 		await clear_with(pack.get_textures())

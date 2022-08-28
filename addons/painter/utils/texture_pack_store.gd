@@ -1,8 +1,18 @@
 extends RefCounted
 
 ## Utility for saving and loading textures to memory or disk.
+##
+## [b]Example Usage:[/b]
+## [codeblock]
+## var store = TexturePackStore.new("user://textures")
+## stare.max_packs_in_memory = 1
+## var pack_a = store.add_textures([a, b, c])
+## var pack_b = store.add_textures([d, e, f])
+## var a_textures = pack_a.get_textures()
+## store.cleanup()
+## [/codeblock]
 
-## The maximum `Pack` objects stored in ram. When this value is exceeded the
+## The maximum Pack objects stored in ram. When this value is exceeded the
 ## oldest packs will be saved to disk.
 var max_packs_in_memory := 10
 ## The maximum packs to save to disk before the oldest are deleted.
@@ -47,7 +57,7 @@ class Pack extends RefCounted:
 			return
 		var dir := Directory.new()
 		for texture_num in file_count:
-			dir.remove_at(file_on_disk % texture_num)
+			dir.remove(file_on_disk % texture_num)
 	
 	func get_path_on_disk(texture : int) -> String:
 		if file_on_disk.is_empty():
@@ -61,7 +71,7 @@ class Pack extends RefCounted:
 #			erase_from_disk()
 			var dir := Directory.new()
 			for texture_num in file_count:
-				dir.remove_at(file_on_disk % texture_num)
+				dir.remove(file_on_disk % texture_num)
 
 func _init(path : String):
 	_path = path.plus_file("/%s_%s.png")
@@ -96,6 +106,15 @@ func add_textures(new_textures : Array) -> Pack:
 	return new_pack
 
 
+func cleanup() -> void:
+	# Because remove_at doesn't delete recursively, delete the packs one-by one.
+	var dir := Directory.new()
+	for pack in _packs:
+		if pack.get_ref():
+			pack.get_ref().erase_from_disk()
+	dir.remove(_path.get_base_dir())
+
+
 func _get_packs(in_memory : bool) -> Array:
 	var packs := []
 	for pack in _packs:
@@ -113,12 +132,12 @@ func _save_to_disk_if_needed() -> void:
 		packs_in_memory.front().get_ref().save_to_disk()
 
 
-## Function called by a pack so threads can be handled here, to avoid packs with
-## unfinished threads being freed.
+# Function called by a pack so threads can be handled here, to avoid packs with
+# unfinished threads being freed.
 func _save_pack(pack : Pack):
 	var thread := Thread.new()
 	_save_threads[pack.id] = thread
-	thread.start(_threaded_save_to_disk, pack)
+	thread.start(_threaded_save_to_disk.bind(pack))
 
 
 func _threaded_save_to_disk(pack : Pack) -> void:
@@ -134,12 +153,3 @@ func _threaded_save_to_disk(pack : Pack) -> void:
 func _save_thread_completed(pack_for : int):
 	_save_threads[pack_for].wait_to_finish()
 	_save_threads.erase(pack_for)
-
-
-func cleanup() -> void:
-	# Because remove_at doesn't delete recursively, delete the packs one-by one.
-	var dir := Directory.new()
-	for pack in _packs:
-		if pack.get_ref():
-			pack.get_ref().erase_from_disk()
-	dir.remove_at(_path.get_base_dir())
