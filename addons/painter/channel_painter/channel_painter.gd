@@ -44,7 +44,7 @@ func clear_with(value) -> void:
 	if value is Texture2D:
 		_clear_texture_rect.texture = value
 	elif value is Color:
-		# FIXME: alpha of transparent colors needs to be premultiplied
+		# TODO: alpha of transparent colors needs to be premultiplied
 		_clear_color_rect.color = value
 	_result_texture_rect.hide()
 	# Clear to support transparent textures.
