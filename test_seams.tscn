@@ -1,0 +1,88 @@
+[gd_scene load_steps=11 format=3 uid="uid://dvbrcat1u7tmd"]
+
+[ext_resource type="Shader" path="res://test_seams.gdshader" id="1_1765m"]
+[ext_resource type="ArrayMesh" uid="uid://ds6dlfsvec33m" path="res://assets/models/cylinder.obj" id="2_l0h70"]
+[ext_resource type="Texture2D" uid="uid://dttm18dmc7exb" path="res://blue.png" id="2_sy6lb"]
+[ext_resource type="Texture2D" uid="uid://creg381k3ok" path="res://seams.png" id="4_3fxvk"]
+[ext_resource type="Material" uid="uid://nftyqgjrtxpp" path="res://addons/painter/seams/seams.material" id="4_pwt1j"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_bk8wd"]
+viewport_path = NodePath("SubViewport")
+
+[sub_resource type="Shader" id="Shader_j7gxf"]
+code = "shader_type spatial;
+
+uniform sampler2D tex;
+uniform sampler2D seam;
+uniform float scale = 1;
+uniform bool on;
+
+void fragment() {
+	if (on) {
+	ALBEDO = texture(tex, UV + (texture(seam, UV).xy - vec2(.5)) * scale * 2.0).rgb;
+	} else {
+	ALBEDO = texture(tex, UV).rgb;
+	}
+//	COLOR = texture(seam, UV);
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_e8q1d"]
+resource_local_to_scene = true
+render_priority = 0
+shader = SubResource("Shader_j7gxf")
+on = true
+scale = 0.003
+seam = SubResource("ViewportTexture_bk8wd")
+tex = ExtResource("2_sy6lb")
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_m5aja"]
+viewport_path = NodePath("SubViewportContainer/SubViewport")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_awq3h"]
+resource_local_to_scene = true
+shader = ExtResource("1_1765m")
+on = true
+scale = 0.025
+seam = SubResource("ViewportTexture_m5aja")
+tex = ExtResource("2_sy6lb")
+
+[node name="TestSeams" type="Node3D"]
+
+[node name="MeshInstance3d" type="MeshInstance3D" parent="."]
+material_override = SubResource("ShaderMaterial_e8q1d")
+mesh = ExtResource("2_l0h70")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+offset_right = 512.0
+offset_bottom = 512.0
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+handle_input_locally = false
+render_target_update_mode = 4
+
+[node name="SeamsRect" type="TextureRect" parent="SubViewportContainer/SubViewport"]
+material = ExtResource("4_pwt1j")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -640.0
+offset_bottom = -136.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("4_3fxvk")
+ignore_texture_size = true
+
+[node name="SeamsRect2" type="TextureRect" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_awq3h")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -1.0
+offset_right = -641.0
+offset_bottom = -136.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_sy6lb")
+ignore_texture_size = true

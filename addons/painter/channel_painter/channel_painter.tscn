@@ -10,7 +10,7 @@
 resource_local_to_scene = true
 shader = ExtResource("2")
 erase = null
-strength = 0.031
+strength = 0.004
 
 [sub_resource type="ShaderMaterial" id="3"]
 resource_local_to_scene = true

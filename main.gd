@@ -56,7 +56,7 @@ func _on_SaveButton_pressed() -> void:
 
 
 func _on_FileDialog_file_selected(path : String) -> void:
-	var data = painter.get_data(0).get_data()
+	var data = painter.get_result(0).get_image()
 	data.convert(Image.FORMAT_RGBA8)
 	data.save_png(path)
 

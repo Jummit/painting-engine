@@ -9,14 +9,11 @@ uniform sampler2D previous : hint_default_white;
 uniform sampler2D stroke : hint_default_white;
 uniform sampler2D seams : hint_default_white;
 uniform bool erase;
-uniform float strength = 0.031;
+uniform float strength = 0.019;
 
 void fragment() {
-//	vec2 offset = (texture(seams, UV).rg - vec2(.5)) * 2.0;
-//	vec2 uv = UV + offset * strength;
-	// TODO: use offset again
-//	vec2 uv = UV * strength;
-	vec2 uv = UV;
+	vec2 offset = (texture(seams, UV).rg - vec2(.5)) * 2.0;
+	vec2 uv = UV + offset * strength;
 	vec4 stroke_color = texture(stroke, uv);
 	vec4 previous_color = texture(previous, UV);
 	if (erase) {
