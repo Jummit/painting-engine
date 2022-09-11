@@ -23,13 +23,13 @@ const CHANNELS = {
 	#roughness = Color.WHITE,
 }
 
-@onready var paintable_model : MeshInstance3D = $PaintableModel
-@onready var camera : Camera3D = $Camera3D
-@onready var brush_preview : Node3D = $BrushPreview
-@onready var brush_property_panel : Panel = $SideBar/VBoxContainer/BrushPropertyPanel
-@onready var file_dialog : FileDialog = $FileDialog
-@onready var mesh_option_button : OptionButton = $MeshOptionButton
-@onready var stencil_preview : TextureRect = $StencilPreview
+@onready var brush_property_panel = %BrushPropertyPanel
+@onready var brush_preview = %BrushPreview
+@onready var paintable_model = %PaintableModel
+@onready var camera = %NavigationCamera
+@onready var stencil_preview = %StencilPreview
+@onready var file_dialog = %FileDialog
+@onready var mesh_option_button = %MeshOptionButton
 
 func _ready() -> void:
 	setup_painter()
@@ -52,7 +52,7 @@ func _unhandled_key_input(event : InputEvent) -> void:
 
 
 func _on_SaveButton_pressed() -> void:
-	file_dialog.popup()
+	file_dialog.popup_centered_ratio()
 
 
 func _on_FileDialog_file_selected(path : String) -> void:
