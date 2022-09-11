@@ -22,7 +22,6 @@ uniform sampler2D albedo : hint_default_white;
 uniform sampler2D tip : hint_default_white;
 uniform sampler2D stencil : hint_default_white;
 uniform mat4 stencil_transform;
-uniform bool erase = false;
 uniform sampler2D previous;
 uniform float max_opacity = 1.0;
 
@@ -33,7 +32,6 @@ varying vec3 normal;
 const float DEPTH_OFFSET = 0.3;
 
 void vertex() {
-	vec4 clip_space = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
 	POSITION = vec4(vec2(UV.x, UV.y) - vec2(.5), 0.0, 0.5);
 	position = VERTEX.xyz;
 	normal = NORMAL;
@@ -100,11 +98,11 @@ void fragment() {
 	float strength = texture(tip, brush_uv).r * texture(tip, brush_uv).a * brush_color.a * facing * depth * stencil_strength;
 	if (any(lessThan(brush_uv, vec2(0.01))) || any(greaterThan(brush_uv, vec2(0.95))))
 		strength = 0.0;
+	vec4 previous_color = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
+	ALBEDO = triplanar_mapped_texture(albedo).rgb * brush_color.rgb;
 	// TODO: Better triplanar mapping for normal maps
 //	ALBEDO = ALBEDO * (1.0 - strength) +
 //			triplanar_mapped_texture(albedo) * strength;
-	vec4 previous_color = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
-	ALBEDO = texture(albedo, UV).rgb * brush_color.rgb;
 	ALPHA = clamp(previous_color.a + strength, 0, max_opacity);
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574

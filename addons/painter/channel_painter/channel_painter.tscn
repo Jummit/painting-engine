@@ -18,7 +18,6 @@ render_priority = 0
 shader = ExtResource("3")
 brush_color = Quaternion(1, 1, 1, 1)
 brush_transform = null
-erase = false
 max_opacity = 1.0
 stencil_transform = null
 
