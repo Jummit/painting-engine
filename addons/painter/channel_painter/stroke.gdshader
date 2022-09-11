@@ -105,8 +105,6 @@ void fragment() {
 //			triplanar_mapped_texture(albedo) * strength;
 	vec4 previous_color = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
 	ALBEDO = texture(albedo, UV).rgb * brush_color.rgb;
-	if (previous_color.a > 0.0)
-		ALBEDO = mix(previous_color.rgb, ALBEDO, strength);
 	ALPHA = clamp(previous_color.a + strength, 0, max_opacity);
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
