@@ -11,7 +11,6 @@ const SYMMETRY_AXIS := {
 	z = Vector3.FORWARD,
 }
 
-const Properties = preload("res://addons/property_panel/properties.gd")
 const FileUtils = preload("res://addons/file_utils/file_utils.gd")
 const Brush = preload("addons/painter/brush.gd")
 
@@ -38,7 +37,7 @@ class EditableBrush:
 			"symmetry_axis":
 				brush.symmetry_axis = SYMMETRY_AXIS[value]
 			"projection":
-				brush.projection = Brush.Projection[value]
+				brush.projection = Brush.PaintProjection[value]
 			"tip":
 				brush.tip = FileUtils.as_texture(value)
 			_:
@@ -55,13 +54,14 @@ class EditableBrush:
 			"texture":
 				return brush.get_texture(0)
 			"stencil":
+				@warning_ignore(incompatible_ternary)
 				return null if not brush.stencil else brush.stencil.resource_path
 			"symmetry":
 				return Brush.Symmetry.keys()[brush.symmetry]
 			"symmetry_axis":
 				return SYMMETRY_AXIS.values()[SYMMETRY_AXIS.values().find(brush.symmetry_axis)]
 			"projection":
-				return Brush.Projection.keys()[brush.projection]
+				return Brush.PaintProjection.keys()[brush.projection]
 			"tip":
 				return "" if not brush.tip else brush.tip.resource_path
 			_:
@@ -91,7 +91,7 @@ func _ready() -> void:
 		Properties.EnumProperty.new("symmetry_axis", SYMMETRY_AXIS.keys()),
 		Properties.IntProperty.new("radial_symmetry_count", 2, 12),
 		"Misc",
-		Properties.EnumProperty.new("projection", Brush.Projection.keys()),
+		Properties.EnumProperty.new("projection", Brush.PaintProjection.keys()),
 		Properties.FilePathProperty.new("stencil"),
 	])
 

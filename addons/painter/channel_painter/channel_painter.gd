@@ -33,9 +33,9 @@ func init(mesh : Mesh, _size : Vector2, seams_texture : Texture2D):
 	_result_viewport.size = _size
 	_mesh_instance.mesh = mesh
 	_stroke_viewport.size = _size
-	_stroke_material.set_shader_param("previous", _stroke_viewport.get_texture())
-	_result_material.set_shader_param("seams", seams_texture)
-	_result_material.set_shader_param("stroke", _stroke_viewport.get_texture())
+	_stroke_material.set_shader_parameter("previous", _stroke_viewport.get_texture())
+	_result_material.set_shader_parameter("seams", seams_texture)
+	_result_material.set_shader_parameter("stroke", _stroke_viewport.get_texture())
 	finish_stroke()
 
 
@@ -72,20 +72,20 @@ func paint(brush : Brush, transform : Transform3D, operation : PaintOperation,
 	operation.camera_state.apply(_camera)
 	_mesh_instance.transform = operation.model_transform
 	
-	_stroke_material.set_shader_param("brush_transform", transform)
+	_stroke_material.set_shader_parameter("brush_transform", transform)
 	var color := brush.get_color(get_index())
 	color.a = brush.flow
 	if brush.flow_pen_pressure:
 		color.a = smoothstep(0.0, color.a, operation.pressure * 2)
-	_stroke_material.set_shader_param("brush_color", color)
-	_stroke_material.set_shader_param("max_opacity", brush.stroke_opacity)
-	_stroke_material.set_shader_param("albedo", brush.get_texture(get_index()))
-	_stroke_material.set_shader_param("erase", brush.erase)
-	_stroke_material.set_shader_param("tip", brush.tip)
-	_stroke_material.set_shader_param("stencil", brush.stencil)
-	_stroke_material.set_shader_param("stencil_transform", brush.stencil_transform)
+	_stroke_material.set_shader_parameter("brush_color", color)
+	_stroke_material.set_shader_parameter("max_opacity", brush.stroke_opacity)
+	_stroke_material.set_shader_parameter("albedo", brush.get_texture(get_index()))
+	_stroke_material.set_shader_parameter("erase", brush.erase)
+	_stroke_material.set_shader_parameter("tip", brush.tip)
+	_stroke_material.set_shader_parameter("stencil", brush.stencil)
+	_stroke_material.set_shader_parameter("stencil_transform", brush.stencil_transform)
 	
-	_result_material.set_shader_param("erase", brush.erase)
+	_result_material.set_shader_parameter("erase", brush.erase)
 	
 	_busy = true
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
@@ -108,7 +108,7 @@ func finish_stroke() -> void:
 	# has to be created and given to the result shader.
 	var texture := ImageTexture.new()
 	texture.create_from_image(_result_viewport.get_texture().get_image())
-	_result_material.set_shader_param("previous", texture)
+	_result_material.set_shader_parameter("previous", texture)
 	
 	# Clear the stroke viewport by hiding the mesh.
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
@@ -126,20 +126,20 @@ func get_result() -> ViewportTexture:
 #	operation.camera_state.apply(_camera)
 #	_mesh_instance.transform = operation.model_transform
 #
-#	_stroke_material.set_shader_param("brush_transform", transform)
+#	_stroke_material.set_shader_parameter("brush_transform", transform)
 #	var color := brush.get_color(get_index())
 #	color.a = brush.flow
 #	if brush.flow_pen_pressure:
 #		color.a = smoothstep(0.0, color.a, operation.pressure * 2)
-#	_stroke_material.set_shader_param("brush_color", color)
-#	_stroke_material.set_shader_param("max_opacity", brush.stroke_opacity)
-#	_stroke_material.set_shader_param("albedo", brush.get_texture(get_index()))
-#	_stroke_material.set_shader_param("erase", brush.erase)
-#	_stroke_material.set_shader_param("tip", brush.tip)
-#	_stroke_material.set_shader_param("stencil", brush.stencil)
-#	_stroke_material.set_shader_param("stencil_transform", brush.stencil_transform)
+#	_stroke_material.set_shader_parameter("brush_color", color)
+#	_stroke_material.set_shader_parameter("max_opacity", brush.stroke_opacity)
+#	_stroke_material.set_shader_parameter("albedo", brush.get_texture(get_index()))
+#	_stroke_material.set_shader_parameter("erase", brush.erase)
+#	_stroke_material.set_shader_parameter("tip", brush.tip)
+#	_stroke_material.set_shader_parameter("stencil", brush.stencil)
+#	_stroke_material.set_shader_parameter("stencil_transform", brush.stencil_transform)
 #
-#	_result_material.set_shader_param("erase", brush.erase)
+#	_result_material.set_shader_parameter("erase", brush.erase)
 #
 #	_busy = true
 #	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE

@@ -25,4 +25,4 @@ func _input(_event: InputEvent) -> void:
 		return
 	texture = brush.stencil
 	var transform := brush.stencil_transform
-	material.set_shader_param("transform", transform)
+	material.set_shader_parameter("transform", transform)

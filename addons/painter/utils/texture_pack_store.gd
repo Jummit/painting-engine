@@ -74,7 +74,7 @@ class Pack extends RefCounted:
 				dir.remove(file_on_disk % texture_num)
 
 func _init(path : String):
-	_path = path.plus_file("/%s_%s.png")
+	_path = path.path_join("/%s_%s.png")
 	var dir := Directory.new()
 	dir.open("")
 	dir.remove(path)
