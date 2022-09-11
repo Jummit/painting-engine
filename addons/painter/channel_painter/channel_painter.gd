@@ -106,9 +106,8 @@ func finish_stroke() -> void:
 	
 	# To be able to add a new stroke ontop of the current result, a snapshot
 	# has to be created and given to the result shader.
-	var texture := ImageTexture.new()
-	texture.create_from_image(_result_viewport.get_texture().get_image())
-	_result_material.set_shader_parameter("previous", texture)
+	_result_material.set_shader_parameter("previous",
+			ImageTexture.create_from_image(_result_viewport.get_texture().get_image()))
 	
 	# Clear the stroke viewport by hiding the mesh.
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE

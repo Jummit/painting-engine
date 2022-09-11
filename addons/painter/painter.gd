@@ -364,6 +364,7 @@ func _create_stroke_action(thread : Thread) -> void:
 	_undo_redo.add_do_method(self, "_store_operations", _stroke_operations)
 	_undo_redo.add_undo_method(self, "_remove_operations", _stroke_operations.size())
 	var pack := _store_results()
+	# TODO: this is important but clears the result for some reason
 #	_undo_redo.add_do_method(self, "_load_results", pack)
 	_undo_redo.add_undo_method(self, "_load_results", _current_pack)
 	_undo_redo.commit_action()

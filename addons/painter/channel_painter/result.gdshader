@@ -5,9 +5,9 @@ render_mode unshaded, blend_disabled;
 Shader that applies a stroke to the existing result.
 */
 
-uniform sampler2D previous;
-uniform sampler2D stroke;
-uniform sampler2D seams;
+uniform sampler2D previous : hint_default_white;
+uniform sampler2D stroke : hint_default_white;
+uniform sampler2D seams : hint_default_white;
 uniform bool erase;
 uniform float strength = 0.031;
 
@@ -23,6 +23,4 @@ void fragment() {
 		COLOR.rgb = mix(previous_color.rgb, stroke_color.rgb, stroke_color.a);
 		COLOR.a = max(previous_color.a, stroke_color.a);
 	}
-	// TODO: don't do this
-	COLOR = vec4(1.0, 0, 0, 1);
 }
