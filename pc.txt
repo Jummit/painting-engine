@@ -1,5 +1,0 @@
-Platz machen
-Computer bewegen
-Monitor und tastatur anschließen
-Festplatte einbauen
-Gnome installieren

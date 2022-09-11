@@ -1,6 +1,6 @@
 extends "res://addons/property_panel/property_panel.gd"
 
-# Panel exposing brush properties.
+## Panel exposing brush properties.
 
 var _editable_brush : EditableBrush
 
@@ -66,6 +66,7 @@ class EditableBrush:
 				return "" if not brush.tip else brush.tip.resource_path
 			_:
 				return brush.get(property)
+
 
 func _ready() -> void:
 	super._ready()

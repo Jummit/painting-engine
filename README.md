@@ -1,6 +1,6 @@
 # Godot Painting Engine
 
-A 3D painting engine aiming to be on par with Substance Painter's features.
+A 3D painting engine written in GDScript aiming to be on-par with Substance Painter's features.
 
 ## Building
 

@@ -108,6 +108,6 @@ void fragment() {
 	ALPHA = clamp(previous_color.a + strength, 0, max_opacity);
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
-//	if (ALPHA > 0.0)
-//		ALBEDO /= ALPHA;
+	if (ALPHA > 0.0)
+		ALBEDO /= ALPHA;
 }
