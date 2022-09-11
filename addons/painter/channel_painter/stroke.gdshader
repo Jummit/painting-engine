@@ -34,8 +34,6 @@ const float DEPTH_OFFSET = 0.3;
 
 void vertex() {
 	vec4 clip_space = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
-	view_uv = -(clip_space / clip_space.w).xy / 2.0 + vec2(.5, .5);
-	view_uv.x = 1.0 - view_uv.x;
 	POSITION = vec4(vec2(UV.x, UV.y) - vec2(.5), 0.0, 0.5);
 	position = VERTEX.xyz;
 	normal = NORMAL;

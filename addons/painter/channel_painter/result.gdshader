@@ -12,8 +12,11 @@ uniform bool erase;
 uniform float strength = 0.031;
 
 void fragment() {
-	vec2 offset = (texture(seams, UV).rg - vec2(.5)) * 2.0;
-	vec2 uv = UV + offset * strength;
+//	vec2 offset = (texture(seams, UV).rg - vec2(.5)) * 2.0;
+//	vec2 uv = UV + offset * strength;
+	// TODO: use offset again
+//	vec2 uv = UV * strength;
+	vec2 uv = UV;
 	vec4 stroke_color = texture(stroke, uv);
 	vec4 previous_color = texture(previous, UV);
 	if (erase) {
