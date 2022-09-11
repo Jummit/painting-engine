@@ -49,8 +49,8 @@ const ChannelPainter = preload("channel_painter/channel_painter.gd")
 const CameraState = preload("camera_state.gd")
 const PaintOperation = preload("paint_operation.gd")
 
-var brush : Brush
 ## The brush settings used for painting the model.
+var brush : Brush
 
 # Emitted after the stored results are applied to the paint viewports.
 signal _results_loaded

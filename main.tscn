@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://TextureRect.gd" id="8_sdgh6"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8qj6s"]
+transparency = 1
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_v6wh7"]
 sky_horizon_color = Color(0.629583, 0.652716, 0.6875, 1)
