@@ -78,7 +78,7 @@ func handle_stencil_input(event : InputEvent) -> bool:
 		last_stencil.y *= viewport_ratio.y
 	if Input.is_action_pressed("grab_stencil"):
 		painter.brush.stencil_transform.origin = last_stencil.origin\
-			+ (mouse - change_start) / viewport_size
+			+ (mouse - change_start) / Vector2(viewport_size)
 		return true
 	elif Input.is_action_pressed("change_stencil"):
 		var stencil_pos = last_stencil.origin * viewport_size

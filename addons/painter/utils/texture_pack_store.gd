@@ -112,6 +112,8 @@ func cleanup() -> void:
 	for pack in _packs:
 		if pack.get_ref():
 			pack.get_ref().erase_from_disk()
+	dir.open("")
+	print("clean ", _path.get_base_dir())
 	dir.remove(_path.get_base_dir())
 
 

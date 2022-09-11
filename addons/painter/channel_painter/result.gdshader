@@ -23,4 +23,6 @@ void fragment() {
 		COLOR.rgb = mix(previous_color.rgb, stroke_color.rgb, stroke_color.a);
 		COLOR.a = max(previous_color.a, stroke_color.a);
 	}
+	// TODO: don't do this
+	COLOR = vec4(1.0, 0, 0, 1);
 }
