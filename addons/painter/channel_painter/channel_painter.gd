@@ -57,17 +57,20 @@ func paint(operations : Array[PaintOperation]) -> void:
 	_mesh_instance.transform = operations.front().model_transform
 	var brush : Brush = operations.front().brush
 	
-	_stroke_material.set_shader_parameter("brush_transforms", operations.map(func(o): return o.brush_transform))
+	var transforms: Array[Transform3D] = operations.map(
+			func(o): return o.brush_transform)
+	_stroke_material.set_shader_parameter("brush_transforms",
+			_mat_to_float_array(transforms))
 	var color := brush.get_color(get_index())
 	color.a = brush.flow
 	if brush.flow_pen_pressure:
 		color.a = smoothstep(0.0, color.a, operations.front().pressure * 2)
+	_stroke_material.set_shader_parameter("strokes", operations.size())
 	_stroke_material.set_shader_parameter("brush_color", color)
 	_stroke_material.set_shader_parameter("max_opacity", brush.stroke_opacity)
 	_stroke_material.set_shader_parameter("albedo", brush.get_texture(get_index()))
 	_stroke_material.set_shader_parameter("erase", brush.erase)
 	_stroke_material.set_shader_parameter("tip", brush.tip)
-	_stroke_material.set_shader_parameter("stencil", brush.stencil)
 	_stroke_material.set_shader_parameter("stencil_transform", brush.stencil_transform)
 	
 	_result_material.set_shader_parameter("erase", brush.erase)
@@ -78,6 +81,19 @@ func paint(operations : Array[PaintOperation]) -> void:
 	# TODO: really?
 	_result_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
+
+
+static func _mat_to_float_array(transforms: Array[Transform3D]) -> PackedFloat32Array:
+	var ar: PackedFloat32Array = []
+	for t in transforms:
+		ar += PackedFloat32Array([t.basis.x.x, t.basis.x.y, t.basis.x.z,
+				0,
+				t.basis.y.x, t.basis.y.y, t.basis.y.z,
+				0,
+				t.basis.z.x, t.basis.z.y, t.basis.z.z,
+				0,
+				t.origin.x, t.origin.y, t.origin.z, 1])
+	return ar
 
 
 ## Apply the current stroke to the result.

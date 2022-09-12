@@ -97,11 +97,11 @@ func handle_stencil_input(event : InputEvent) -> bool:
 
 
 func handle_paint_input(event : InputEvent) -> void:
-	if (event is InputEventMouseButton or event is InputEventMouseMotion)\
-			and Input.is_action_pressed("paint")\
-			and event.position.distance_to(change_end) > 10:
-		painter.paint(event.position, 1.0 if event is InputEventMouseButton\
-			else event.pressure)
+	if event is InputEventMouseButton:
+		painter.paint(event.position, 1.0)
+	elif event is InputEventMouseMotion\
+			and Input.is_action_pressed("paint"):
+		painter.paint_to(event.position, event.pressure)
 	if event.is_action_released("paint"):
 		painter.finish_stroke()
 	elif event.is_action_pressed("toggle_eraser"):

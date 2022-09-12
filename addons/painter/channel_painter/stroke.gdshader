@@ -17,11 +17,10 @@ The brush tip is then projected into surface-space using that transform.
 */
 
 uniform int strokes;
-uniform mat4[5] brush_transforms;
+uniform mat4[20] brush_transforms;
 uniform vec4 brush_color = vec4(1.0);
 uniform sampler2D albedo : hint_default_white;
 uniform sampler2D tip : hint_default_white;
-uniform sampler2D stencil : hint_default_white;
 uniform mat4 stencil_transform;
 uniform sampler2D previous;
 uniform float max_opacity = 1.0;
@@ -38,6 +37,7 @@ void vertex() {
 	normal = NORMAL;
 }
 
+// TODO: Better triplanar mapping for normal maps
 vec3 triplanar_mapped_texture(sampler2D sampler) {
 	vec3 uv_power_normal = abs(normal);
 	vec4 color = vec4(0.0);
@@ -49,13 +49,13 @@ vec3 triplanar_mapped_texture(sampler2D sampler) {
 
 void fragment() {
 	vec4 previous_color = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
-	for (int i = 0; i < strokes; i++) {
 	// TODO: Optimize this.
 	mat4 offset_uv_transform = mat4(
 		vec4(1.0, 0.0, 0.0, 0.5),
 		vec4(0.0, 1.0, 0.0, 0.5),
 		vec4(0.0, 0.0, 1.0, DEPTH_OFFSET),
 		vec4(0.0, 0.0, 0.0, 0.0));
+	for (int i = 0; i < strokes; i++) {
 	mat4 brush_transform = brush_transforms[i];
 	vec3 brush_space = (inverse(brush_transform) * vec4(position, 1) * offset_uv_transform).xyz;
 	brush_space = clamp(brush_space, vec3(0), vec3(1.0));
@@ -64,13 +64,9 @@ void fragment() {
 	float facing = clamp(dot(
 		max(brush_transform[2].xyz, normalize(brush_transform[2].xyz) * 0.2) * 5.0,
 		normal), 0.0, 1.0);
-	vec4 stencil_col = texture(stencil, ((vec4(view_uv - stencil_transform[3].xy, 1, 1)
-			* inverse(stencil_transform)).xy + vec2(.5, .5)));
-	float stencil_strength = min(stencil_col.a, stencil_col.r);
-	float strength = texture(tip, brush_uv).r * texture(tip, brush_uv).a * brush_color.a * facing * depth * stencil_strength;
+	float strength = texture(tip, brush_uv).r * texture(tip, brush_uv).a * brush_color.a * facing * depth;
 	if (any(lessThan(brush_uv, vec2(0.01))) || any(greaterThan(brush_uv, vec2(0.95))))
 		strength = 0.0;
-	// TODO: Better triplanar mapping for normal maps
 		float alpha = clamp(previous_color.a + strength, 0, max_opacity);
 		ALPHA = max(previous_color.a, alpha);
 		ALBEDO = mix(previous_color.rgb, triplanar_mapped_texture(albedo).rgb * brush_color.rgb, alpha);
@@ -78,6 +74,6 @@ void fragment() {
 	}
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
-	if (ALPHA > 0.0)
-		ALBEDO /= ALPHA;
+//	if (ALPHA > 0.0)
+//		ALBEDO /= ALPHA;
 }

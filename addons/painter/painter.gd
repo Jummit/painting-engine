@@ -69,12 +69,6 @@ var _texture_store : TexturePackStore
 var _seams_texture : Texture2D
 # The number of painting viewports available.
 var _channels : int
-# If `finish_stroke()` was called while a paint operation was in progress. If
-# true, `finish_stroke()` will be called after the operation is completed.
-var _finish_stroke_when_done : bool
-# If a paint operation is in progress.
-var _painting : bool
-var _paint_queue: Array[PaintOperation]
 
 # Runtime State
 
@@ -92,6 +86,13 @@ var _next_angle := randf()
 var _session : Array
 # The paint operations of the current stroke.
 var _stroke_operations : Array
+# If `finish_stroke()` was called while a paint operation was in progress. If
+# true, `finish_stroke()` will be called after the operation is completed.
+var _finish_stroke_when_done : bool
+# If a paint operation is in progress.
+var _painting : bool
+var _paint_queue: Array[PaintOperation]
+var _last_screen_pos: Vector2
 
 ## Path to the folder of textures used for undo/redo.
 const TEXTURE_PATH := "user://undo_textures/{painter}"
@@ -149,6 +150,7 @@ func get_result(channel : int) -> ViewportTexture:
 ## Optionally the pen pressure can be provided.
 func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 	_assert_ready()
+	_last_screen_pos = screen_pos
 	# Verify the brush transforms.
 	var transforms := _get_brush_transforms(screen_pos, pressure)
 	if transforms.is_empty():
@@ -168,10 +170,17 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 				_model.get_viewport().get_camera_3d()), 
 				_model.transform, screen_pos,
 				brush.duplicate(), pressure, transform))
+#	print("mak")
 	await _do_paint(operations)
 #	if _finish_stroke_when_done:
 #		finish_stroke()
 #		_finish_stroke_when_done = false
+
+
+func paint_to(screen_pos : Vector2, pressure := 1.0) -> void:
+	var current_last = _last_screen_pos
+	for i in 50:
+		paint(current_last.lerp(screen_pos, i / 50.0), pressure)
 
 
 ## Add a new stroke which can be undone using [method]undo[/method].
