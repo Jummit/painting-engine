@@ -76,9 +76,6 @@ func paint(operations : Array[PaintOperation]) -> void:
 	_result_material.set_shader_parameter("erase", brush.erase)
 	
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-	await RenderingServer.frame_post_draw
-	# Wait for the stroke to be rendered before updating the result.
-	# TODO: really?
 	_result_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
 

@@ -19,14 +19,14 @@ extends Node
 ## [/codeblock]
 
 # TODO:
+# Fix undo redo
+# Fix alpha bleeding when painting on top of stroke
 # Reimplement stencils
 # Brush tip is upside down
 # Fix brush preview being too large when not over surface
 # Screen-space painting
 # SubViewport-dependent size
 # UV size
-# Batch paint operations
-# No gaps when mouse moves fast
 # Stroke smoothing
 # Clone brush
 # Color picking
@@ -37,9 +37,8 @@ extends Node
 
 # Possibilities:
 # Persistent undo-redo
-# Batch rendering
 # Only render region and update with `texture_set_data_partial`.
-# How to find out which areas are painted though?
+# -> How to find out which areas are painted though?
 
 const Brush = preload("brush.gd")
 const TexturePackStore = preload("utils/texture_pack_store.gd")
@@ -170,14 +169,14 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 				_model.get_viewport().get_camera_3d()), 
 				_model.transform, screen_pos,
 				brush.duplicate(), pressure, transform))
-#	print("mak")
 	await _do_paint(operations)
-#	if _finish_stroke_when_done:
-#		finish_stroke()
-#		_finish_stroke_when_done = false
+	if _finish_stroke_when_done:
+		finish_stroke()
+		_finish_stroke_when_done = false
 
 
 func paint_to(screen_pos : Vector2, pressure := 1.0) -> void:
+	# TODO: what should pressure be here
 	var current_last = _last_screen_pos
 	for i in 50:
 		paint(current_last.lerp(screen_pos, i / 50.0), pressure)

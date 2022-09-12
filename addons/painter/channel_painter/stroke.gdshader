@@ -17,7 +17,7 @@ The brush tip is then projected into surface-space using that transform.
 */
 
 uniform int strokes;
-uniform mat4[20] brush_transforms;
+uniform mat4[40] brush_transforms;
 uniform vec4 brush_color = vec4(1.0);
 uniform sampler2D albedo : hint_default_white;
 uniform sampler2D tip : hint_default_white;
@@ -74,6 +74,6 @@ void fragment() {
 	}
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
-//	if (ALPHA > 0.0)
-//		ALBEDO /= ALPHA;
+	if (ALPHA > 0.0)
+		ALBEDO /= ALPHA;
 }
