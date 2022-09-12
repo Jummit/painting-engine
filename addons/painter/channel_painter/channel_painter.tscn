@@ -17,9 +17,10 @@ resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("3")
 brush_color = Quaternion(1, 1, 1, 1)
-brush_transform = null
+brush_transforms = null
 max_opacity = 1.0
 stencil_transform = null
+strokes = null
 
 [node name="ChannelPainter" type="Node"]
 script = ExtResource("1")

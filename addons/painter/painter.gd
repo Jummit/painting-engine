@@ -41,8 +41,6 @@ extends Node
 # Only render region and update with `texture_set_data_partial`.
 # How to find out which areas are painted though?
 
-signal paint_completed
-
 const Brush = preload("brush.gd")
 const TexturePackStore = preload("utils/texture_pack_store.gd")
 const ChannelPainter = preload("channel_painter/channel_painter.gd")
@@ -76,6 +74,7 @@ var _channels : int
 var _finish_stroke_when_done : bool
 # If a paint operation is in progress.
 var _painting : bool
+var _paint_queue: Array[PaintOperation]
 
 # Runtime State
 
@@ -163,14 +162,16 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 	_next_angle = randf()
 	_next_size = randf()
 	_last_transform = transforms.front()
-	var operation := PaintOperation.new(CameraState.new(
-			_model.get_viewport().get_camera_3d()), 
-			_model.transform, screen_pos,
-			brush.duplicate(), pressure)
-	await _do_paint(operation)
-	if _finish_stroke_when_done:
-		finish_stroke()
-		_finish_stroke_when_done = false
+	var operations: Array[PaintOperation] = []
+	for transform in transforms:
+		operations.append(PaintOperation.new(CameraState.new(
+				_model.get_viewport().get_camera_3d()), 
+				_model.transform, screen_pos,
+				brush.duplicate(), pressure, transform))
+	await _do_paint(operations)
+#	if _finish_stroke_when_done:
+#		finish_stroke()
+#		_finish_stroke_when_done = false
 
 
 ## Add a new stroke which can be undone using [method]undo[/method].
@@ -246,18 +247,22 @@ func _assert_ready() -> void:
 # Painting
 
 # Perform a paint operation.
-func _do_paint(operation : PaintOperation) -> void:
+func _do_paint(operations : Array[PaintOperation]) -> void:
+	if _painting:
+		_paint_queue += operations
+		return
 	_painting = true
-	_stroke_operations.append(operation)
-	var transforms := _get_brush_transforms(operation.screen_position,
-			operation.pressure)
-	for transform in transforms:
-		for channel in _channels:
-			_get_channel_painter(channel).paint(brush, transform, operation)
-			await _get_channel_painter(channel).paint_completed
+	_stroke_operations += operations
+	for channel in _channels:
+		_get_channel_painter(channel).paint(operations)
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
 	_result_changed = true
 	_painting = false
-	emit_signal("paint_completed")
+	if not _paint_queue.is_empty():
+		var to_paint := _paint_queue.duplicate()
+		_paint_queue.clear()
+		await _do_paint(to_paint)
 
 
 # Returns the ChannelPainter of the given channel.

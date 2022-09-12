@@ -16,7 +16,8 @@ translation, rotation and scale already figured out.
 The brush tip is then projected into surface-space using that transform.
 */
 
-uniform mat4 brush_transform;
+uniform int strokes;
+uniform mat4[5] brush_transforms;
 uniform vec4 brush_color = vec4(1.0);
 uniform sampler2D albedo : hint_default_white;
 uniform sampler2D tip : hint_default_white;
@@ -47,12 +48,15 @@ vec3 triplanar_mapped_texture(sampler2D sampler) {
 }
 
 void fragment() {
+	vec4 previous_color = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
+	for (int i = 0; i < strokes; i++) {
 	// TODO: Optimize this.
 	mat4 offset_uv_transform = mat4(
 		vec4(1.0, 0.0, 0.0, 0.5),
 		vec4(0.0, 1.0, 0.0, 0.5),
 		vec4(0.0, 0.0, 1.0, DEPTH_OFFSET),
 		vec4(0.0, 0.0, 0.0, 0.0));
+	mat4 brush_transform = brush_transforms[i];
 	vec3 brush_space = (inverse(brush_transform) * vec4(position, 1) * offset_uv_transform).xyz;
 	brush_space = clamp(brush_space, vec3(0), vec3(1.0));
 	vec2 brush_uv = brush_space.xy;
@@ -66,10 +70,12 @@ void fragment() {
 	float strength = texture(tip, brush_uv).r * texture(tip, brush_uv).a * brush_color.a * facing * depth * stencil_strength;
 	if (any(lessThan(brush_uv, vec2(0.01))) || any(greaterThan(brush_uv, vec2(0.95))))
 		strength = 0.0;
-	vec4 previous_color = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
 	// TODO: Better triplanar mapping for normal maps
-	ALBEDO = triplanar_mapped_texture(albedo).rgb * brush_color.rgb;
-	ALPHA = clamp(previous_color.a + strength, 0, max_opacity);
+		float alpha = clamp(previous_color.a + strength, 0, max_opacity);
+		ALPHA = max(previous_color.a, alpha);
+		ALBEDO = mix(previous_color.rgb, triplanar_mapped_texture(albedo).rgb * brush_color.rgb, alpha);
+		previous_color = vec4(ALBEDO, alpha);
+	}
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
 	if (ALPHA > 0.0)

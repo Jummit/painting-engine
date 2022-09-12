@@ -6,13 +6,6 @@ extends Node
 ## finished, it gets applied to the ResultViewport. This is required to support
 ## stroke opacity.
 
-## Emitted once the entire painting queue has been completed.
-signal paint_completed
-
-var _paint_queue : Array
-## If a paint stroke is being rendered.
-var _busy := false
-
 const Brush = preload("../brush.gd")
 const CameraState = preload("res://addons/painter/camera_state.gd")
 const PaintOperation = preload("res://addons/painter/paint_operation.gd")
@@ -59,24 +52,16 @@ func clear_with(value) -> void:
 	await finish_stroke()
 
 
-func paint(brush : Brush, transform : Transform3D, operation : PaintOperation,
-		depth := 0) -> void:
-	if depth > 500:
-		# GDScript doesn't have tail call optimizations, so the depth of
-		# recursion needs to be limited. Strokes this long shouldn't happen
-		# anyway.
-		return _paint_queue.clear()
-	if _busy:
-		return _paint_queue.append([brush, transform, operation])
+func paint(operations : Array[PaintOperation]) -> void:
+	operations.front().camera_state.apply(_camera)
+	_mesh_instance.transform = operations.front().model_transform
+	var brush : Brush = operations.front().brush
 	
-	operation.camera_state.apply(_camera)
-	_mesh_instance.transform = operation.model_transform
-	
-	_stroke_material.set_shader_parameter("brush_transform", transform)
+	_stroke_material.set_shader_parameter("brush_transforms", operations.map(func(o): return o.brush_transform))
 	var color := brush.get_color(get_index())
 	color.a = brush.flow
 	if brush.flow_pen_pressure:
-		color.a = smoothstep(0.0, color.a, operation.pressure * 2)
+		color.a = smoothstep(0.0, color.a, operations.front().pressure * 2)
 	_stroke_material.set_shader_parameter("brush_color", color)
 	_stroke_material.set_shader_parameter("max_opacity", brush.stroke_opacity)
 	_stroke_material.set_shader_parameter("albedo", brush.get_texture(get_index()))
@@ -87,23 +72,16 @@ func paint(brush : Brush, transform : Transform3D, operation : PaintOperation,
 	
 	_result_material.set_shader_parameter("erase", brush.erase)
 	
-	_busy = true
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
 	# Wait for the stroke to be rendered before updating the result.
+	# TODO: really?
 	_result_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
-	_busy = false
-	if not _paint_queue.is_empty():
-		await callv("paint", _paint_queue.pop_front() + [depth + 1])
-	emit_signal("paint_completed")
 
 
 ## Apply the current stroke to the result.
 func finish_stroke() -> void:
-	if _busy:
-		await self.paint_completed
-	
 	# To be able to add a new stroke ontop of the current result, a snapshot
 	# has to be created and given to the result shader.
 	_result_material.set_shader_parameter("previous",
@@ -118,36 +96,3 @@ func finish_stroke() -> void:
 
 func get_result() -> ViewportTexture:
 	return _result_viewport.get_texture()
-
-
-#func _paint_multiple(brushes : Array, transforms : Array,
-#		operations : Array) -> void:
-#	operation.camera_state.apply(_camera)
-#	_mesh_instance.transform = operation.model_transform
-#
-#	_stroke_material.set_shader_parameter("brush_transform", transform)
-#	var color := brush.get_color(get_index())
-#	color.a = brush.flow
-#	if brush.flow_pen_pressure:
-#		color.a = smoothstep(0.0, color.a, operation.pressure * 2)
-#	_stroke_material.set_shader_parameter("brush_color", color)
-#	_stroke_material.set_shader_parameter("max_opacity", brush.stroke_opacity)
-#	_stroke_material.set_shader_parameter("albedo", brush.get_texture(get_index()))
-#	_stroke_material.set_shader_parameter("erase", brush.erase)
-#	_stroke_material.set_shader_parameter("tip", brush.tip)
-#	_stroke_material.set_shader_parameter("stencil", brush.stencil)
-#	_stroke_material.set_shader_parameter("stencil_transform", brush.stencil_transform)
-#
-#	_result_material.set_shader_parameter("erase", brush.erase)
-#
-#	_busy = true
-#	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-#	await RenderingServer.frame_post_draw
-#	# Wait for the stroke to be rendered before updating the result.
-#	_result_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-#	await RenderingServer.frame_post_draw
-#	_busy = false
-#	if not _paint_queue.is_empty():
-#		yield(Awaiter.new(callv("paint",
-#				_paint_queue.pop_front() + [depth + 1])), "done")
-#	emit_signal("paint_completed")
