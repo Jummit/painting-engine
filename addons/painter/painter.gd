@@ -19,13 +19,13 @@ extends Node
 ## [/codeblock]
 
 ## TODO:
-# Reimplement stencils
-# Brush tip is upside down
 # Screen-space painting
+# Reimplement stencils
 # Viewport-dependent size
 # Fix follow path
 # Better seams. there must be a way
 # Fix pressure
+# Preview is too big
 # UV size
 # Stroke smoothing
 # Clone brush
@@ -331,7 +331,8 @@ func _get_transform_on_mesh_surface(screen_pos : Vector2) -> Transform3D:
 		return Transform3D()
 	var z : Vector3 = result.normal
 	var x := z.cross(Vector3.FORWARD if z.abs() == Vector3.UP else Vector3.UP)
-	var y := x.cross(z)
+	# Negate here so the brush texture is upright.
+	var y := -x.cross(z)
 	var basis := Basis(x, y, z).orthonormalized()
 	var origin : Vector3 = result.position + result.normal / 100.0
 	return Transform3D(basis, origin)
