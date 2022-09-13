@@ -19,27 +19,29 @@ extends Node
 ## [/codeblock]
 
 ## TODO:
-# Screen-space painting
-# Reimplement stencils
 # Viewport-dependent size
-# Fix follow path
 # Better seams. there must be a way
 # Fix pressure
 # Preview is too big
 # UV size
-# Stroke smoothing
+# Stroke leaves artifact
 # Clone brush
 # Color picking
 # Backface painting
+# Screen-space painting
+# Reimplement stencils
+# Clicking after brush adjust paints
 # Repainting with higher resolution
 # Position jitter
 # Explicit surface selection
 # Make seam generation optional
 # Test with multiple surfaces
 # Add more maps in the demo
+# Scrolling options zooms in
 # Use scene unique names and class_name
 
 ## Possibilities:
+# Stroke smoothing
 # Documentation, maybe on GH pages?
 # Usage in games?
 # Put in some asset library
@@ -303,16 +305,18 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 	var transform := _get_transform_on_mesh_surface(screen_pos)
 	if transform == Transform3D():
 		return []
-	if brush.follow_path and _last_transform == Transform3D() and not preview:
-		# Follow path can only work if one transform was already provided.
-		# Because the preview should be displayed correctly when hovering
-		# only return if the function was called by the painter.
-		_last_transform = transform
-		return []
-	elif brush.follow_path and _last_transform == Transform3D()\
-			and transform.origin.x != _last_transform.origin.x:
-		transform.basis = _get_basis_pointed_towards(_last_transform.origin,
-				transform.origin, transform.basis.z)
+	if brush.follow_path:
+		if _last_transform == Transform3D() and not preview:
+			# Follow path can only work if one transform was already provided.
+			# Because the preview should be displayed correctly when hovering
+			# only return if the function was called by the painter.
+			_last_transform = transform
+			return []
+		elif _last_transform != Transform3D() and transform.origin.x != _last_transform.origin.x:
+			var z := transform.basis.z
+			var y := -_last_transform.origin.direction_to(transform.origin)
+			var x = y.cross(z) if y.y > 0 else z.cross(y)
+			transform.basis = Basis(x, y, z).orthonormalized()
 	pressure = pressure if brush.size_pen_pressure else 1
 	transform.basis = _apply_brush_basis(transform.basis, pressure)
 	return brush.apply_symmetry(transform)
@@ -345,6 +349,8 @@ static func _get_basis_pointed_towards(from : Vector3, to : Vector3,
 	var z := forward
 	var x := from.direction_to(to)
 	var y = x.cross(z) if x.x > 0 else z.cross(x)
+#	var x := from.direction_to(to)
+#	var y = x.cross(z) if x.x > 0 else z.cross(x)
 	return Basis(x, y, z).orthonormalized()
 
 
