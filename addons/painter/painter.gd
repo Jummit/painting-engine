@@ -25,7 +25,12 @@ extends Node
 # Brush tip is upside down
 # Fix brush preview being too large when not over surface
 # Screen-space painting
-# SubViewport-dependent size
+# Viewport-dependent size
+# Lines
+# Squares
+# Circles
+# Fix follow path
+# Fix pressure
 # UV size
 # Stroke smoothing
 # Clone brush
@@ -34,6 +39,8 @@ extends Node
 # Repainting with higher resolution
 # Position jitter
 # Explicit surface selection
+# Documentation
+# Game possibilities?
 
 # Possibilities:
 # Persistent undo-redo
