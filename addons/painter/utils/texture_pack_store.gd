@@ -87,9 +87,7 @@ func add_textures(new_textures : Array) -> Pack:
 	var textures := []
 	for texture in new_textures:
 		if texture is ViewportTexture:
-			var image_texture := ImageTexture.new()
-			image_texture.create_from_image(texture.get_image())
-			texture = image_texture
+			texture = ImageTexture.create_from_image(texture.get_image())
 		textures.append(texture)
 	var new_pack := Pack.new(textures, _last_id)
 	new_pack.save = self._save_pack
@@ -98,6 +96,8 @@ func add_textures(new_textures : Array) -> Pack:
 	_save_to_disk_if_needed()
 	var on_disk := _get_packs(false)
 	if on_disk.size() > max_packs_on_disk:
+		# TODO: remove this, maybe make verbose?
+		print("too many saved")
 		# Don't free it, just clear the disk and memory space.
 		on_disk.front().get_ref().textures.clear()
 		on_disk.front().get_ref().erase_from_disk()
@@ -132,6 +132,7 @@ func _get_packs(in_memory : bool) -> Array:
 func _save_to_disk_if_needed() -> void:
 	var packs_in_memory := _get_packs(true)
 	if packs_in_memory.size() > max_packs_in_memory:
+		print("save to disk")
 		packs_in_memory.front().get_ref().save_to_disk()
 
 
@@ -146,8 +147,9 @@ func _save_pack(pack : Pack):
 func _threaded_save_to_disk(pack : Pack) -> void:
 	var path := _path % [pack.id, "%s"]
 	for texture_num in pack.textures.size():
-		(pack.textures[texture_num] as Texture2D).get_data().save_png(
-				path % texture_num)
+		# TODO: remove this or make verbose
+		print(pack.textures[texture_num], path % texture_num)
+		pack.textures[texture_num].get_image().save_png(path % texture_num)
 	pack.textures.clear()
 	pack.file_on_disk = path
 	call_deferred("_save_thread_completed", pack.id)
