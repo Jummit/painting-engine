@@ -48,30 +48,29 @@ vec3 triplanar_mapped_texture(sampler2D sampler) {
 }
 
 void fragment() {
-	vec4 previous_color = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
 	// TODO: Optimize this.
+	ALPHA = 0.0;
 	mat4 offset_uv_transform = mat4(
 		vec4(1.0, 0.0, 0.0, 0.5),
 		vec4(0.0, 1.0, 0.0, 0.5),
 		vec4(0.0, 0.0, 1.0, DEPTH_OFFSET),
 		vec4(0.0, 0.0, 0.0, 0.0));
 	for (int i = 0; i < strokes; i++) {
-	mat4 brush_transform = brush_transforms[i];
-	vec3 brush_space = (inverse(brush_transform) * vec4(position, 1) * offset_uv_transform).xyz;
-	brush_space = clamp(brush_space, vec3(0), vec3(1.0));
-	vec2 brush_uv = brush_space.xy;
-	float depth = 1.0 - smoothstep(0.0, 0.4, abs(brush_space.z - DEPTH_OFFSET));
-	float facing = clamp(dot(
-		max(brush_transform[2].xyz, normalize(brush_transform[2].xyz) * 0.2) * 5.0,
-		normal), 0.0, 1.0);
-	float strength = texture(tip, brush_uv).r * texture(tip, brush_uv).a * brush_color.a * facing * depth;
-	if (any(lessThan(brush_uv, vec2(0.01))) || any(greaterThan(brush_uv, vec2(0.95))))
-		strength = 0.0;
-		float alpha = clamp(previous_color.a + strength, 0, max_opacity);
-		ALPHA = max(previous_color.a, alpha);
-		ALBEDO = mix(previous_color.rgb, triplanar_mapped_texture(albedo).rgb * brush_color.rgb, alpha);
-		previous_color = vec4(ALBEDO, alpha);
+		mat4 brush_transform = brush_transforms[i];
+		vec3 brush_space = (inverse(brush_transform) * vec4(position, 1) * offset_uv_transform).xyz;
+		brush_space = clamp(brush_space, vec3(0), vec3(1.0));
+		vec2 brush_uv = brush_space.xy;
+		float depth = 1.0 - smoothstep(0.0, 0.4, abs(brush_space.z - DEPTH_OFFSET));
+		float facing = clamp(dot(max(brush_transform[2].xyz, normalize(brush_transform[2].xyz) * 0.2) * 5.0,normal), 0.0, 1.0);
+		float strength = texture(tip, brush_uv).r * texture(tip, brush_uv).a * brush_color.a * facing * depth;
+		if (any(lessThan(brush_uv, vec2(0.01))) || any(greaterThan(brush_uv, vec2(0.95)))) {
+			strength = 0.0;
+		}
+		ALPHA += strength;
 	}
+	vec4 prev = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
+	ALBEDO = mix(triplanar_mapped_texture(albedo).rgb * brush_color.rgb, prev.rgb, ALPHA);
+	ALPHA = min(prev.a + ALPHA, max_opacity);
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574
 	if (ALPHA > 0.0)

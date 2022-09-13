@@ -19,7 +19,6 @@ extends Node
 ## [/codeblock]
 
 ## TODO:
-# Fix alpha bleeding when painting on top of stroke
 # Reimplement stencils
 # Brush tip is upside down
 # Screen-space painting
