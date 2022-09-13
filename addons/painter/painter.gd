@@ -18,18 +18,15 @@ extends Node
 ## painter.cleanup()
 ## [/codeblock]
 
-# TODO:
+## TODO:
 # Fix undo redo
 # Fix alpha bleeding when painting on top of stroke
 # Reimplement stencils
 # Brush tip is upside down
-# Fix brush preview being too large when not over surface
 # Screen-space painting
 # Viewport-dependent size
-# Lines
-# Squares
-# Circles
 # Fix follow path
+# Better seams. there must be a way
 # Fix pressure
 # UV size
 # Stroke smoothing
@@ -39,10 +36,16 @@ extends Node
 # Repainting with higher resolution
 # Position jitter
 # Explicit surface selection
-# Documentation
-# Game possibilities?
+# Make seam generation optional
+# Test with multiple surfaces
+# Add more maps in the demo
+# Use scene unique names and class_name
 
-# Possibilities:
+## Possibilities:
+# Documentation, maybe on GH pages?
+# Usage in games?
+# Put in some asset library
+# Shapes: Lines, Squares, Circles...
 # Persistent undo-redo
 # Only render region and update with `texture_set_data_partial`.
 # -> How to find out which areas are painted though?
@@ -58,6 +61,7 @@ var brush : Brush
 
 # Emitted after the stored results are applied to the paint viewports.
 signal _results_loaded
+signal _paint_completed
 
 # Initial State
 
@@ -83,7 +87,7 @@ var _current_pack# : TexturePackStore.Pack
 # While the stroke is not finished this stores where the user last painted.
 var _last_transform : Transform3D
 # Stores if the user successfully painted since the last stroke.
-var _result_changed := false
+var _result_stored := false
 # Next random size.
 var _next_size := randf()
 # Next random angle.
@@ -92,9 +96,6 @@ var _next_angle := randf()
 var _session : Array
 # The paint operations of the current stroke.
 var _stroke_operations : Array
-# If `finish_stroke()` was called while a paint operation was in progress. If
-# true, `finish_stroke()` will be called after the operation is completed.
-var _finish_stroke_when_done : bool
 # If a paint operation is in progress.
 var _painting : bool
 var _paint_queue: Array[PaintOperation]
@@ -123,8 +124,7 @@ func init(model : MeshInstance3D, result_size := Vector2(1024, 1024), channels :
 	_model = model
 	brush = initial_brush
 	_result_size = result_size
-	_texture_store = TexturePackStore.new(
-			TEXTURE_PATH.format({painter=str(get_instance_id())}))
+	_texture_store = TexturePackStore.new(TEXTURE_PATH.format({painter=get_instance_id()}))
 	var shape := ConcavePolygonShape3D.new()
 	shape.set_faces(_model.mesh.get_faces())
 	_collision_shape.shape = shape
@@ -177,9 +177,7 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 				_model.transform, screen_pos,
 				brush.duplicate(), pressure, transform))
 	await _do_paint(operations)
-	if _finish_stroke_when_done:
-		finish_stroke()
-		_finish_stroke_when_done = false
+	_paint_completed.emit()
 
 
 func paint_to(screen_pos : Vector2, pressure := 1.0) -> void:
@@ -193,18 +191,16 @@ func paint_to(screen_pos : Vector2, pressure := 1.0) -> void:
 func finish_stroke() -> void:
 	_assert_ready()
 	_last_transform = Transform3D()
-	if not _result_changed:
+	if _result_stored:
 		return
 	if _painting:
-		_finish_stroke_when_done = true
-		# Still wait for the result to be stored so this function can savely
-		# be waited upon.
-		await _results_loaded
+		await _paint_completed
+	# TODO: use some sort of multiawait here
 	for channel in _channels:
 		await _get_channel_painter(channel).finish_stroke()
 	var thread := Thread.new()
 	thread.start(_create_stroke_action.bind(thread))
-	_result_changed = false
+	_result_stored = true
 	await _results_loaded
 
 
@@ -259,7 +255,7 @@ func _assert_ready() -> void:
 	assert(_model, "Painter not initialized.")
 
 
-# Painting
+### Painting ###
 
 # Perform a paint operation.
 func _do_paint(operations : Array[PaintOperation]) -> void:
@@ -272,7 +268,7 @@ func _do_paint(operations : Array[PaintOperation]) -> void:
 		_get_channel_painter(channel).paint(operations)
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
-	_result_changed = true
+	_result_stored = false
 	_painting = false
 	if not _paint_queue.is_empty():
 		var to_paint := _paint_queue.duplicate()
@@ -364,7 +360,7 @@ func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 			.scaled(Vector3.ONE * scale * random_scale)
 
 
-# Undo/Redo
+### Undo/Redo ##
 
 # Append the operations
 func _store_operations(operations : Array) -> void:
@@ -384,8 +380,7 @@ func _create_stroke_action(thread : Thread) -> void:
 	_undo_redo.add_do_method(self, "_store_operations", _stroke_operations)
 	_undo_redo.add_undo_method(self, "_remove_operations", _stroke_operations.size())
 	var pack := _store_results()
-	# TODO: this is important but clears the result for some reason
-#	_undo_redo.add_do_method(self, "_load_results", pack)
+	_undo_redo.add_do_method(self, "_load_results", pack)
 	_undo_redo.add_undo_method(self, "_load_results", _current_pack)
 	_undo_redo.commit_action()
 	thread.call_deferred("wait_to_finish")
@@ -400,7 +395,7 @@ func _store_results() -> TexturePackStore.Pack:
 
 
 # Set the pack of textures as the current result. Emits [_result_loaded] when
-# finished.
+# finished so it can be awaited when used inside a thread or [UndoRedo] call.
 func _load_results(pack) -> void:# : TexturePackStore.Pack) -> void:
 	if pack != _current_pack:
 		_current_pack = pack

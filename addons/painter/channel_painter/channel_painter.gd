@@ -29,7 +29,7 @@ func init(mesh : Mesh, _size : Vector2, seams_texture : Texture2D):
 	_stroke_material.set_shader_parameter("previous", _stroke_viewport.get_texture())
 	_result_material.set_shader_parameter("seams", seams_texture)
 	_result_material.set_shader_parameter("stroke", _stroke_viewport.get_texture())
-	finish_stroke()
+	await finish_stroke()
 
 
 ## Clears the result with a color or a texture.
@@ -99,7 +99,8 @@ func finish_stroke() -> void:
 	# To be able to add a new stroke ontop of the current result, a snapshot
 	# has to be created and given to the result shader.
 	_result_material.set_shader_parameter("previous",
-			ImageTexture.create_from_image(_result_viewport.get_texture().get_image()))
+			ImageTexture.create_from_image(
+			_result_viewport.get_texture().get_image()))
 	
 	# Clear the stroke viewport by hiding the mesh.
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
