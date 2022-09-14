@@ -19,8 +19,6 @@ extends Node
 ## [/codeblock]
 
 ## TODO:
-# Fix pressure
-# Preview is too big
 # UV size
 # Stroke leaves artifact
 # Clone brush
@@ -32,6 +30,7 @@ extends Node
 # Repainting with higher resolution
 # Better seams. there must be a way
 # Position jitter
+# Make some sort of diagram showing the process from input -> viewport
 # Explicit surface selection
 # Make seam generation optional
 # Use multistroke for symmetry
@@ -320,10 +319,10 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 			var y := -_last_transform.origin.direction_to(transform.origin)
 			var x = y.cross(z) if y.y > 0 else z.cross(y)
 			transform.basis = Basis(x, y, z).orthonormalized()
-	pressure = pressure if brush.size_pen_pressure else 1
 	if brush.size_space == Brush.Space.SCREEN:
 		var camera := _model.get_viewport().get_camera_3d()
-		transform.basis = transform.basis.scaled(Vector3.ONE * camera.position.distance_to(hit.position) / 10.0)
+		transform.basis = transform.basis.scaled(
+				Vector3.ONE * camera.position.distance_to(hit.position) / 10.0)
 	transform.basis = _apply_brush_basis(transform.basis, pressure)
 	return brush.apply_symmetry(transform)
 
@@ -367,7 +366,9 @@ static func _get_basis_pointed_towards(from : Vector3, to : Vector3,
 # brush and the pressure.
 func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 	var random_scale : float = lerp(1.0, _next_size, brush.size_jitter)
-	var scale := brush.size * (pressure + 0.1)
+	var scale := brush.size
+	if brush.size_pen_pressure:
+		scale *= (pressure + 0.1)
 	var random_angle : float = brush.angle_jitter * _next_angle
 	return basis\
 			.rotated(basis.z.normalized(), brush.angle + random_angle)\

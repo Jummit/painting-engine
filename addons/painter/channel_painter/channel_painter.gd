@@ -60,7 +60,7 @@ func paint(operations : Array[PaintOperation]) -> void:
 	var brush : Brush = operations.front().brush
 	
 	var transforms: Array[Transform3D] = operations.map(
-			func(o): return o.brush_transform)
+			func(o: PaintOperation): return o.brush_transform)
 	_stroke_material.set_shader_parameter("brush_transforms",
 			_mat_to_float_array(transforms))
 	var colors : Array[Color]
@@ -77,8 +77,9 @@ func paint(operations : Array[PaintOperation]) -> void:
 	_stroke_material.set_shader_parameter("albedo", brush.get_texture(get_index()))
 	_stroke_material.set_shader_parameter("erase", brush.erase)
 	_stroke_material.set_shader_parameter("tip", brush.tip)
-	_stroke_material.set_shader_parameter("stencil_transform", brush.stencil_transform)
 	
+	# TODO: enable stencils
+	#_result_material.set_shader_parameter("stencil_transform", brush.stencil_transform)
 	_result_material.set_shader_parameter("erase", brush.erase)
 	
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
