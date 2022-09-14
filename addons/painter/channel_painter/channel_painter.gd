@@ -55,18 +55,24 @@ func clear_with(value) -> void:
 func paint(operations : Array[PaintOperation]) -> void:
 	operations.front().camera_state.apply(_camera)
 	_mesh_instance.transform = operations.front().model_transform
+	# TODO: maybe only batch strokes with same brush properties / transform
+	# to allow for on-the-fly changes.
 	var brush : Brush = operations.front().brush
 	
 	var transforms: Array[Transform3D] = operations.map(
 			func(o): return o.brush_transform)
 	_stroke_material.set_shader_parameter("brush_transforms",
 			_mat_to_float_array(transforms))
-	var color := brush.get_color(get_index())
-	color.a = brush.flow
-	if brush.flow_pen_pressure:
-		color.a = smoothstep(0.0, color.a, operations.front().pressure * 2)
+	var colors : Array[Color]
+	for operation in operations:
+		var op_brush := operation.brush
+		var color = op_brush.get_color(get_index())
+		color.a = op_brush.flow
+		if op_brush.flow_pen_pressure:
+			color.a = lerp(0.0, color.a, operation.pressure * 2)
+		colors.append(color.srgb_to_linear())
 	_stroke_material.set_shader_parameter("strokes", operations.size())
-	_stroke_material.set_shader_parameter("brush_color", color)
+	_stroke_material.set_shader_parameter("colors", _col_to_float_array(colors))
 	_stroke_material.set_shader_parameter("max_opacity", brush.stroke_opacity)
 	_stroke_material.set_shader_parameter("albedo", brush.get_texture(get_index()))
 	_stroke_material.set_shader_parameter("erase", brush.erase)
@@ -79,6 +85,13 @@ func paint(operations : Array[PaintOperation]) -> void:
 	await RenderingServer.frame_post_draw
 	_result_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
+
+
+static func _col_to_float_array(cols: Array[Color]) -> PackedFloat32Array:
+	var ar: PackedFloat32Array = []
+	for c in cols:
+		ar += PackedFloat32Array([c.r, c.g, c.b, c.a])
+	return ar
 
 
 static func _mat_to_float_array(transforms: Array[Transform3D]) -> PackedFloat32Array:

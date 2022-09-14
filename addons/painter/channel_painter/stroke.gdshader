@@ -18,7 +18,7 @@ The brush tip is then projected into surface-space using that transform.
 
 uniform int strokes;
 uniform mat4[40] brush_transforms;
-uniform vec4 brush_color = vec4(1.0);
+uniform vec4[40] colors : source_color;
 uniform sampler2D albedo : hint_default_white;
 uniform sampler2D tip : hint_default_white;
 uniform mat4 stencil_transform;
@@ -62,6 +62,7 @@ void fragment() {
 		vec2 brush_uv = brush_space.xy;
 		float depth = 1.0 - smoothstep(0.0, 0.4, abs(brush_space.z - DEPTH_OFFSET));
 		float facing = clamp(dot(max(brush_transform[2].xyz, normalize(brush_transform[2].xyz) * 0.2) * 5.0,normal), 0.0, 1.0);
+		vec4 brush_color = colors[i];
 		float strength = texture(tip, brush_uv).r * texture(tip, brush_uv).a * brush_color.a * facing * depth;
 		if (any(lessThan(brush_uv, vec2(0.01))) || any(greaterThan(brush_uv, vec2(0.95)))) {
 			strength = 0.0;
@@ -69,7 +70,7 @@ void fragment() {
 		ALPHA += strength;
 	}
 	vec4 prev = texture(previous, vec2(SCREEN_UV.x, SCREEN_UV.y));
-	ALBEDO = mix(triplanar_mapped_texture(albedo).rgb * brush_color.rgb, prev.rgb, ALPHA);
+	ALBEDO = mix(triplanar_mapped_texture(albedo).rgb * colors[0].rgb, prev.rgb, ALPHA);
 	ALPHA = min(prev.a + ALPHA, max_opacity);
 	// Premultiply alpha because viewports with transparent backgrounds become
 	// darker otherwise: https://github.com/godotengine/godot/issues/17574

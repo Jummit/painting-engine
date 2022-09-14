@@ -47,6 +47,7 @@ class Pack extends RefCounted:
 				var texture := ImageTexture.new()
 				texture.create_from_image(image)
 				dir.remove(file_on_disk % file_num)
+				print("Deleted and loaded '", file_on_disk % file_num)
 				textures.append(texture)
 		return textures
 	

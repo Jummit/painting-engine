@@ -19,7 +19,6 @@ extends Node
 ## [/codeblock]
 
 ## TODO:
-# Better seams. there must be a way
 # Fix pressure
 # Preview is too big
 # UV size
@@ -31,6 +30,7 @@ extends Node
 # Reimplement stencils
 # Clicking after brush adjust paints
 # Repainting with higher resolution
+# Better seams. there must be a way
 # Position jitter
 # Explicit surface selection
 # Make seam generation optional
@@ -162,10 +162,11 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 	var transforms := _get_brush_transforms(screen_pos, pressure)
 	if transforms.is_empty():
 		return
-	pressure = pressure if brush.size_pen_pressure else 1.0
 	var distance_to_last := _last_transform.origin.distance_to(
 			transforms.front().origin)
-	var minimum_spacing := brush.spacing * brush.size * pressure * transforms[0].basis.x.length()
+	var minimum_spacing := brush.spacing * brush.size * transforms[0].basis.x.length()
+	if brush.size_pen_pressure:
+		minimum_spacing *= pressure
 	if _last_transform != Transform3D() and distance_to_last < minimum_spacing:
 		return
 	_next_angle = randf()
