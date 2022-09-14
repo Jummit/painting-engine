@@ -37,9 +37,9 @@ class EditableBrush:
 			"symmetry_axis":
 				brush.symmetry_axis = SYMMETRY_AXIS[value]
 			"projection":
-				brush.projection = Brush.Space[value]
+				brush.projection = Brush.BrushProjection[value]
 			"size_space":
-				brush.size_space = Brush.Space[value]
+				brush.size_space = Brush.SizeSpace[value]
 			"tip":
 				brush.tip = FileUtils.as_texture(value)
 			_:
@@ -63,9 +63,9 @@ class EditableBrush:
 			"symmetry_axis":
 				return SYMMETRY_AXIS.values()[SYMMETRY_AXIS.values().find(brush.symmetry_axis)]
 			"projection":
-				return Brush.Space.keys()[brush.projection]
+				return Brush.BrushProjection.keys()[brush.projection]
 			"size_space":
-				return Brush.Space.keys()[brush.size_space]
+				return Brush.SizeSpace.keys()[brush.size_space]
 			"tip":
 				return "" if not brush.tip else brush.tip.resource_path
 			_:
@@ -96,8 +96,8 @@ func _ready() -> void:
 		Properties.EnumProperty.new("symmetry_axis", SYMMETRY_AXIS.keys()),
 		Properties.IntProperty.new("radial_symmetry_count", 2, 12),
 		"Misc",
-		Properties.EnumProperty.new("projection", Brush.Space.keys()),
-		Properties.EnumProperty.new("size_space", Brush.Space.keys()),
+		Properties.EnumProperty.new("projection", Brush.BrushProjection.keys()),
+		Properties.EnumProperty.new("size_space", Brush.SizeSpace.keys()),
 		Properties.FilePathProperty.new("stencil"),
 	])
 

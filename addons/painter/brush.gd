@@ -3,9 +3,15 @@ extends RefCounted
 
 ## Brush settings.
 
-enum Space {
+enum BrushProjection {
 	SCREEN, ## The brush is projected from the camera view.
 	SURFACE, ## The brush is projected into the tangent space of the mesh.
+}
+
+enum SizeSpace {
+	SCREEN,
+	SURFACE,
+	UV,
 }
 
 enum Symmetry {
@@ -17,9 +23,9 @@ enum Symmetry {
 ## The scale of the brush tip.
 var size := 1.0
 ## The projection which projects the mouse position into brush space.
-var projection : Space = Space.SURFACE
+var projection : BrushProjection = BrushProjection.SURFACE
 ## If the result should be removed by the opacity of the stroke.
-var size_space : Space = Space.SURFACE
+var size_space : SizeSpace = SizeSpace.SURFACE
 var erase := false
 ## The texture of each channel.
 var textures : Array

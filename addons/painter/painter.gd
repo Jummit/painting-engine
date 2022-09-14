@@ -319,7 +319,7 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 			var y := -_last_transform.origin.direction_to(transform.origin)
 			var x = y.cross(z) if y.y > 0 else z.cross(y)
 			transform.basis = Basis(x, y, z).orthonormalized()
-	if brush.size_space == Brush.Space.SCREEN:
+	if brush.size_space == Brush.SizeSpace.SCREEN:
 		var camera := _model.get_viewport().get_camera_3d()
 		transform.basis = transform.basis.scaled(
 				Vector3.ONE * camera.position.distance_to(hit.position) / 10.0)
