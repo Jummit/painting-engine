@@ -3,9 +3,9 @@ extends RefCounted
 
 ## Brush settings.
 
-enum PaintProjection {
-	SCREEN_SPACE, ## The brush is projected from the camera view.
-	SURFACE_SPACE, ## The brush is projected into the tangent space of the mesh.
+enum Space {
+	SCREEN, ## The brush is projected from the camera view.
+	SURFACE, ## The brush is projected into the tangent space of the mesh.
 }
 
 enum Symmetry {
@@ -17,8 +17,9 @@ enum Symmetry {
 ## The scale of the brush tip.
 var size := 1.0
 ## The projection which projects the mouse position into brush space.
-var projection : PaintProjection = PaintProjection.SURFACE_SPACE
+var projection : Space = Space.SURFACE
 ## If the result should be removed by the opacity of the stroke.
+var size_space : Space = Space.SURFACE
 var erase := false
 ## The texture of each channel.
 var textures : Array
@@ -77,6 +78,8 @@ func get_texture(channel : int) -> Texture2D:
 func duplicate() -> Object:
 	return dict_to_inst(inst_to_dict(self))
 
+
+# TODO: probably move these somewhere else, some util class maybe?
 
 ## Returns the list of transforms that result when the given transform is
 ## mirrored using this brush's symmetry options.

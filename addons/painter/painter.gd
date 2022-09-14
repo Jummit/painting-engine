@@ -35,6 +35,8 @@ extends Node
 # Position jitter
 # Explicit surface selection
 # Make seam generation optional
+# Use multistroke for symmetry
+# Do something when paint queue is overflowed
 # Test with multiple surfaces
 # Add more maps in the demo
 # Scrolling options zooms in
