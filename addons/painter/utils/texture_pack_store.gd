@@ -40,12 +40,13 @@ class Pack extends RefCounted:
 		if textures.is_empty() and not file_on_disk.is_empty():
 			# Move textures back to memory.
 			var dir := Directory.new()
+			dir.open("user://")
 			for file_num in file_count:
 				var image := Image.new()
 				image.load(file_on_disk % file_num)
 				var texture := ImageTexture.new()
 				texture.create_from_image(image)
-				dir.remove_at(file_on_disk % file_num)
+				dir.remove(file_on_disk % file_num)
 				textures.append(texture)
 		return textures
 	

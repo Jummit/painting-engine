@@ -19,7 +19,6 @@ extends Node
 ## [/codeblock]
 
 ## TODO:
-# Viewport-dependent size
 # Better seams. there must be a way
 # Fix pressure
 # Preview is too big
@@ -166,7 +165,7 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 	pressure = pressure if brush.size_pen_pressure else 1.0
 	var distance_to_last := _last_transform.origin.distance_to(
 			transforms.front().origin)
-	var minimum_spacing := brush.spacing * brush.size * pressure
+	var minimum_spacing := brush.spacing * brush.size * pressure * transforms[0].basis.x.length()
 	if _last_transform != Transform3D() and distance_to_last < minimum_spacing:
 		return
 	_next_angle = randf()
@@ -303,8 +302,9 @@ func get_brush_preview_transforms(screen_pos : Vector2,
 # Pressure is required because it scales the transform if the brush is
 # configured to do so.
 func _get_brush_transforms(screen_pos : Vector2, pressure : float,
-		preview := false) -> Array:
-	var transform := _get_transform_on_mesh_surface(screen_pos)
+		preview := false) -> Array[Transform3D]:
+	var hit := _cast_ray(screen_pos)
+	var transform := _get_transform_from_hit(hit)
 	if transform == Transform3D():
 		return []
 	if brush.follow_path:
@@ -320,19 +320,25 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 			var x = y.cross(z) if y.y > 0 else z.cross(y)
 			transform.basis = Basis(x, y, z).orthonormalized()
 	pressure = pressure if brush.size_pen_pressure else 1
+	if brush.size_space == Brush.Space.SCREEN:
+		var camera := _model.get_viewport().get_camera_3d()
+		transform.basis = transform.basis.scaled(Vector3.ONE * camera.position.distance_to(hit.position) / 10.0)
 	transform.basis = _apply_brush_basis(transform.basis, pressure)
 	return brush.apply_symmetry(transform)
 
 
-# Returns the surface-space transform on the given screen position.
-func _get_transform_on_mesh_surface(screen_pos : Vector2) -> Transform3D:
+func _cast_ray(screen_pos : Vector2) -> Dictionary:
 	var camera := _model.get_viewport().get_camera_3d()
 	var from := camera.project_ray_origin(screen_pos)
 	var to := from + camera.project_ray_normal(screen_pos) * 100
 	var ray := PhysicsRayQueryParameters3D.new()
 	ray.from = from
 	ray.to = to
-	var result := _static_body.get_world_3d().direct_space_state.intersect_ray(ray)
+	return _static_body.get_world_3d().direct_space_state.intersect_ray(ray)
+
+
+# Returns the surface-space transform on the given screen position.
+func _get_transform_from_hit(result : Dictionary) -> Transform3D:
 	if result.is_empty():
 		return Transform3D()
 	var z : Vector3 = result.normal
@@ -363,7 +369,7 @@ func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 	var scale := brush.size * (pressure + 0.1)
 	var random_angle : float = brush.angle_jitter * _next_angle
 	return basis\
-			.rotated(basis.z, brush.angle + random_angle)\
+			.rotated(basis.z.normalized(), brush.angle + random_angle)\
 			.scaled(Vector3.ONE * scale * random_scale)
 
 
