@@ -1,4 +1,5 @@
 extends Node
+class_name Painter
 
 ## Utility for painting meshes.
 ##
