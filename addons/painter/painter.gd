@@ -44,6 +44,7 @@ extends Node
 # Stroke smoothing
 # Documentation, maybe on GH pages?
 # Usage in games?
+# Randomized brush texture
 # Put in some asset library
 # Shapes: Lines, Squares, Circles...
 # Persistent undo-redo
@@ -392,11 +393,11 @@ func _remove_operations(count : int) -> void:
 # file IO.
 func _create_stroke_action(thread : Thread) -> void:
 	_undo_redo.create_action("Paintstroke")
-	_undo_redo.add_do_method(self, "_store_operations", _stroke_operations)
-	_undo_redo.add_undo_method(self, "_remove_operations", _stroke_operations.size())
+	#_undo_redo.add_do_method(_store_operations.bind(_stroke_operations))
+	#_undo_redo.add_undo_method(_remove_operations.bind(_stroke_operations.size()))
 	var pack := _store_results()
-	_undo_redo.add_do_method(self, "_load_results", pack)
-	_undo_redo.add_undo_method(self, "_load_results", _current_pack)
+	#_undo_redo.add_do_method(_load_results.bind(pack))
+	#_undo_redo.add_undo_method(_load_results.bind(_current_pack))
 	_undo_redo.commit_action()
 	thread.call_deferred("wait_to_finish")
 

@@ -11,7 +11,6 @@ const SYMMETRY_AXIS := {
 	z = Vector3.FORWARD,
 }
 
-const FileUtils = preload("res://addons/file_utils/file_utils.gd")
 const Brush = preload("addons/painter/brush.gd")
 
 class EditableBrush:
@@ -20,18 +19,23 @@ class EditableBrush:
 	func _init(_brush):
 		brush = _brush
 	
+	static func load_texture(path: String) -> Texture2D:
+		if ResourceLoader.exists(path):
+			return load(path)
+		return ImageTexture.create_from_image(Image.load_from_file(path))
+	
 	func _set(property: StringName, value) -> bool:
 		match str(property):
 			"color":
 				brush.colors = [value]
 			"texture":
-				var texture := FileUtils.as_texture(value)
+				var texture := load_texture(value)
 				if texture:
 					brush.textures = [texture]
 				else:
 					brush.textures = []
 			"stencil":
-				brush.stencil = FileUtils.as_texture(value)
+				brush.stencil = load_texture(value)
 			"symmetry":
 				brush.symmetry = Brush.Symmetry[value]
 			"symmetry_axis":
@@ -41,7 +45,7 @@ class EditableBrush:
 			"size_space":
 				brush.size_space = Brush.SizeSpace[value]
 			"tip":
-				brush.tip = FileUtils.as_texture(value)
+				brush.tip = load_texture(value)
 			_:
 				if property in brush:
 					brush[property] = value

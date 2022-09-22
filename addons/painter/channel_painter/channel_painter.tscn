@@ -9,18 +9,18 @@
 [sub_resource type="ShaderMaterial" id="2"]
 resource_local_to_scene = true
 shader = ExtResource("2")
-erase = null
-strength = 0.004
+shader_parameter/erase = null
+shader_parameter/strength = 0.004
 
 [sub_resource type="ShaderMaterial" id="3"]
 resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("3")
-brush_transforms = PackedFloat32Array()
-colors = null
-max_opacity = 1.0
-stencil_transform = null
-strokes = null
+shader_parameter/brush_transforms = PackedFloat32Array()
+shader_parameter/colors = null
+shader_parameter/max_opacity = 1.0
+shader_parameter/stencil_transform = null
+shader_parameter/strokes = null
 
 [node name="ChannelPainter" type="Node"]
 script = ExtResource("1")

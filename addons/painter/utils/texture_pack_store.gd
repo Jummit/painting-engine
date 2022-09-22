@@ -39,14 +39,12 @@ class Pack extends RefCounted:
 	func get_textures() -> Array:
 		if textures.is_empty() and not file_on_disk.is_empty():
 			# Move textures back to memory.
-			var dir := Directory.new()
-			dir.open("user://")
 			for file_num in file_count:
 				var image := Image.new()
 				image.load(file_on_disk % file_num)
 				var texture := ImageTexture.new()
 				texture.create_from_image(image)
-				dir.remove(file_on_disk % file_num)
+				DirAccess.remove_absolute(file_on_disk % file_num)
 				print("Deleted and loaded '", file_on_disk % file_num)
 				textures.append(texture)
 		return textures
@@ -57,9 +55,8 @@ class Pack extends RefCounted:
 	func erase_from_disk() -> void:
 		if file_on_disk.is_empty():
 			return
-		var dir := Directory.new()
 		for texture_num in file_count:
-			dir.remove(file_on_disk % texture_num)
+			DirAccess.remove_absolute(file_on_disk % texture_num)
 	
 	func get_path_on_disk(texture : int) -> String:
 		if file_on_disk.is_empty():
@@ -71,16 +68,13 @@ class Pack extends RefCounted:
 			# Can't call functions here, see
 			# https://github.com/godotengine/godot/issues/31166.
 #			erase_from_disk()
-			var dir := Directory.new()
 			for texture_num in file_count:
-				dir.remove(file_on_disk % texture_num)
+				DirAccess.remove_absolute(file_on_disk % texture_num)
 
 func _init(path : String):
 	_path = path.path_join("/%s_%s.png")
-	var dir := Directory.new()
-	dir.open("")
-	dir.remove(path)
-	dir.make_dir_recursive(path)
+	DirAccess.remove_absolute(path)
+	DirAccess.make_dir_recursive_absolute(path)
 
 
 ## Add a new list of textures and return a pack that can be used to load textures
@@ -110,14 +104,12 @@ func add_textures(new_textures : Array) -> Pack:
 
 func cleanup() -> void:
 	# Because remove_at doesn't delete recursively, delete the packs one-by one.
-	var dir := Directory.new()
 	for pack in _packs:
 		if pack.get_ref():
 			pack.get_ref().erase_from_disk()
-	dir.open("")
 	# TODO: remove this, maybe make verbose?
 	print("clean ", _path.get_base_dir())
-	dir.remove(_path.get_base_dir())
+	OS.move_to_trash(_path.get_base_dir())
 
 
 func _get_packs(in_memory : bool) -> Array:
