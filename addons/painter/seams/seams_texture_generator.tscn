@@ -1,9 +1,7 @@
-[gd_scene load_steps=7 format=3 uid="uid://nay6w24wfh4q"]
+[gd_scene load_steps=5 format=3 uid="uid://nay6w24wfh4q"]
 
 [ext_resource type="Material" uid="uid://nftyqgjrtxpp" path="res://addons/painter/seams/seams.material" id="1"]
-[ext_resource type="ArrayMesh" uid="uid://ds6dlfsvec33m" path="res://assets/models/cylinder.obj" id="2_ednqx"]
 [ext_resource type="Script" path="res://addons/painter/seams/seams_texture_generator.gd" id="3"]
-[ext_resource type="Texture2D" uid="uid://bdqv5snj0hjd5" path="res://assets/textures/irregular.png" id="3_n24sk"]
 
 [sub_resource type="Shader" id="6"]
 code = "shader_type spatial;
@@ -31,7 +29,6 @@ render_target_update_mode = 0
 [node name="MeshInstance3D" type="MeshInstance3D" parent="UVViewport"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, -0.5, 0)
 material_override = SubResource("7")
-mesh = ExtResource("2_ednqx")
 
 [node name="Camera3D" type="Camera3D" parent="UVViewport"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.87872)
@@ -50,4 +47,5 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_bottom = 5.0
-texture = ExtResource("3_n24sk")
+grow_horizontal = 2
+grow_vertical = 2

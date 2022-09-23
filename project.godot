@@ -13,9 +13,21 @@ _global_script_classes=[{
 "class": &"NavigationCamera",
 "language": &"GDScript",
 "path": "res://addons/navigation_camera/navigation_camera.gd"
+}, {
+"base": "Node",
+"class": &"Painter",
+"language": &"GDScript",
+"path": "res://addons/painter/painter.gd"
+}, {
+"base": "Panel",
+"class": &"PropertyPanel",
+"language": &"GDScript",
+"path": "res://addons/property_panel/property_panel.gd"
 }]
 _global_script_class_icons={
-"NavigationCamera": "res://addons/navigation_camera/navigation_camera_icon.svg"
+"NavigationCamera": "res://addons/navigation_camera/navigation_camera_icon.svg",
+"Painter": "",
+"PropertyPanel": ""
 }
 
 [WAT]
