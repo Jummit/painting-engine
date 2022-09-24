@@ -1,4 +1,5 @@
 extends RefCounted
+class_name Brush
 ## warning-ignore-all:unused_class_variable
 
 ## Brush settings.
