@@ -35,6 +35,7 @@ class_name Painter
 # Explicit surface selection
 # Make seam generation optional
 # Use multistroke for symmetry
+# Blend modes
 # Do something when paint queue is overflowed
 # Test with multiple surfaces
 # Add more maps in the demo
@@ -58,7 +59,7 @@ const CameraState = preload("camera_state.gd")
 const PaintOperation = preload("paint_operation.gd")
 
 ## The brush settings used for painting the model.
-var brush : Brush
+var brush := Brush.new()
 
 # Emitted after the stored results are applied to the paint viewports.
 signal _results_loaded
@@ -120,10 +121,8 @@ func _notification(what : int) -> void:
 ## channels (textures) to paint, the brush and optionally an array of colors/
 ## textures that will be used as the starting texture.
 ## Should be called before doing anything else.
-func init(model : MeshInstance3D, result_size := Vector2(1024, 1024), channels := 1,
-		initial_brush : Brush = null, start_values := []) -> void:
+func init(model : MeshInstance3D, result_size := Vector2(1024, 1024), channels := 1) -> void:
 	_model = model
-	brush = initial_brush
 	_result_size = result_size
 	_texture_store = TexturePackStore.new(TEXTURE_PATH.format({painter=get_instance_id()}))
 	var shape := ConcavePolygonShape3D.new()
@@ -132,7 +131,6 @@ func init(model : MeshInstance3D, result_size := Vector2(1024, 1024), channels :
 	_collision_shape.transform = _model.transform
 	_seams_texture = await _seams_generator.generate(_model.mesh).completed
 	reset_channels(channels)
-	await clear_with(start_values)
 	_current_pack = _store_results()
 
 

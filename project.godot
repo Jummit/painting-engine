@@ -9,6 +9,11 @@
 config_version=5
 
 _global_script_classes=[{
+"base": "RefCounted",
+"class": &"Brush",
+"language": &"GDScript",
+"path": "res://addons/painter/brush.gd"
+}, {
 "base": "Camera3D",
 "class": &"NavigationCamera",
 "language": &"GDScript",
@@ -25,6 +30,7 @@ _global_script_classes=[{
 "path": "res://addons/property_panel/property_panel.gd"
 }]
 _global_script_class_icons={
+"Brush": "",
 "NavigationCamera": "res://addons/navigation_camera/navigation_camera_icon.svg",
 "Painter": "",
 "PropertyPanel": ""
