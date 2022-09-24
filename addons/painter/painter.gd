@@ -52,7 +52,6 @@ class_name Painter
 # Only render region and update with `texture_set_data_partial`.
 # -> How to find out which areas are painted though?
 
-const Brush = preload("brush.gd")
 const TexturePackStore = preload("utils/texture_pack_store.gd")
 const ChannelPainter = preload("channel_painter/channel_painter.gd")
 const CameraState = preload("camera_state.gd")
