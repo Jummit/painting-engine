@@ -1,4 +1,5 @@
 extends Node3D
+class_name BrushPreview
 
 ## Interactive in-viewport brush peview.
 
@@ -25,9 +26,6 @@ enum Appearance {
 
 ## If the preview should move with the mouse.
 var follow_mouse := true
-
-const Painter = preload("res://addons/painter/painter.gd")
-const Brush = preload("res://addons/painter/brush.gd")
 
 var _painter : Painter
 ## An array of `SingleBrushPreviews`.

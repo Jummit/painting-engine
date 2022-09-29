@@ -36,6 +36,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	print(Engine.get_frames_per_second())
 	if handle_stencil_input(event) or handle_brush_input(event):
 		camera.set_process_input(false)
 	else:
@@ -136,8 +137,9 @@ func setup_painter() -> void:
 	brush.colors.append(Color.DARK_SLATE_BLUE)
 	brush_property_panel.load_brush(brush)
 	
-	await painter.init(paintable_model, Vector2(2048, 2048),
-			CHANNELS.size(), brush, CHANNELS.values())
+	await painter.init(paintable_model, Vector2(2048, 2048), CHANNELS.size())
+	painter.brush = brush
+	painter.clear_with(CHANNELS.values())
 	for channel in CHANNELS.size():
 		paintable_model.material_override[
 				CHANNELS.keys()[channel] + "_texture"] =\

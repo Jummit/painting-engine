@@ -106,6 +106,8 @@ var _last_screen_pos: Vector2
 ## Path to the folder of textures used for undo/redo.
 const TEXTURE_PATH := "user://undo_textures/{painter}"
 
+const _MAX_STROKES_PER_OPERATION := 10
+
 @onready var _channel_painters : Node = $ChannelPainters
 @onready var _collision_shape : CollisionShape3D = $ClickViewport/StaticBody3D/CollisionShape3D
 @onready var _click_viewport : SubViewport = $ClickViewport
@@ -267,13 +269,13 @@ func _do_paint(operations : Array[PaintOperation]) -> void:
 	for channel in _channels:
 		_get_channel_painter(channel).paint(operations)
 	await RenderingServer.frame_post_draw
-	await RenderingServer.frame_post_draw
 	_result_stored = false
 	_painting = false
 	if not _paint_queue.is_empty():
-		var to_paint := _paint_queue.duplicate()
-		_paint_queue.clear()
-		await _do_paint(to_paint)
+		var next : Array[PaintOperation] = []
+		for i in min(_MAX_STROKES_PER_OPERATION, _paint_queue.size()):
+			next.append(_paint_queue.pop_front())
+		await _do_paint(next)
 
 
 # Returns the ChannelPainter of the given channel.

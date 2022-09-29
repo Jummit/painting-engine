@@ -6,7 +6,6 @@ extends Node
 ## finished, it gets applied to the ResultViewport. This is required to support
 ## stroke opacity.
 
-const Brush = preload("../brush.gd")
 const CameraState = preload("res://addons/painter/camera_state.gd")
 const PaintOperation = preload("res://addons/painter/paint_operation.gd")
 
@@ -41,10 +40,10 @@ func clear_with(value) -> void:
 		_clear_color_rect.color = value
 	_result_texture_rect.hide()
 	# Clear to support transparent textures.
-	_result_viewport.render_target_clear_mode =\
-			SubViewport.CLEAR_MODE_ONCE
-	await RenderingServer.frame_post_draw
+	_result_viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ONCE
 	_result_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	_stroke_viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ONCE
+	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
 	_result_texture_rect.show()
 	_clear_texture_rect.texture = null
@@ -83,7 +82,7 @@ func paint(operations : Array[PaintOperation]) -> void:
 	_result_material.set_shader_parameter("erase", brush.erase)
 	
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-	await RenderingServer.frame_post_draw
+#	await RenderingServer.frame_post_draw
 	_result_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
 
