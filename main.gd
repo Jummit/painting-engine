@@ -36,7 +36,6 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	print(Engine.get_frames_per_second())
 	if handle_stencil_input(event) or handle_brush_input(event):
 		camera.set_process_input(false)
 	else:

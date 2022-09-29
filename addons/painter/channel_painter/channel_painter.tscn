@@ -1,10 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://bxk0g87bgor6i"]
+[gd_scene load_steps=7 format=3 uid="uid://bxk0g87bgor6i"]
 
 [ext_resource type="Script" path="res://addons/painter/channel_painter/channel_painter.gd" id="1"]
 [ext_resource type="Shader" path="res://addons/painter/channel_painter/result.gdshader" id="2"]
 [ext_resource type="Shader" path="res://addons/painter/channel_painter/stroke.gdshader" id="3"]
 [ext_resource type="Material" uid="uid://qmo25w7il1r7" path="res://addons/painter/channel_painter/premult_alpha.material" id="4"]
-[ext_resource type="ArrayMesh" uid="uid://ds6dlfsvec33m" path="res://assets/models/cylinder.obj" id="4_r8x16"]
 
 [sub_resource type="ShaderMaterial" id="2"]
 resource_local_to_scene = true
@@ -68,4 +67,3 @@ current = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="StrokeViewport"]
 material_override = SubResource("3")
-mesh = ExtResource("4_r8x16")
