@@ -269,6 +269,7 @@ func _do_paint(operations : Array[PaintOperation]) -> void:
 	for channel in _channels:
 		_get_channel_painter(channel).paint(operations)
 	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
 	_result_stored = false
 	_painting = false
 	if not _paint_queue.is_empty():

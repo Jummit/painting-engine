@@ -77,12 +77,11 @@ func paint(operations : Array[PaintOperation]) -> void:
 	_stroke_material.set_shader_parameter("erase", brush.erase)
 	_stroke_material.set_shader_parameter("tip", brush.tip)
 	
-	# TODO: enable stencils
-	#_result_material.set_shader_parameter("stencil_transform", brush.stencil_transform)
 	_result_material.set_shader_parameter("erase", brush.erase)
 	
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-#	await RenderingServer.frame_post_draw
+	# TODO: Idealy this should be only one await.
+	await RenderingServer.frame_post_draw
 	_result_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	await RenderingServer.frame_post_draw
 
