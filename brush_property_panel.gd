@@ -20,6 +20,8 @@ class EditableBrush:
 		brush = _brush
 	
 	static func load_texture(path: String) -> Texture2D:
+		if not FileAccess.file_exists(path):
+			return null
 		if ResourceLoader.exists(path):
 			return load(path)
 		return ImageTexture.create_from_image(Image.load_from_file(path))
