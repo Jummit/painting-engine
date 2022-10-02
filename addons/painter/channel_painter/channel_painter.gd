@@ -21,14 +21,13 @@ const PaintOperation = preload("res://addons/painter/paint_operation.gd")
 
 func init(mesh : Mesh, _size : Vector2, seams_texture : Texture2D):
 	if not is_inside_tree():
-		await self.ready
+		await ready
 	_result_viewport.size = _size
 	_mesh_instance.mesh = mesh
 	_stroke_viewport.size = _size
 	_stroke_material.set_shader_parameter("previous", _stroke_viewport.get_texture())
 	_result_material.set_shader_parameter("seams", seams_texture)
 	_result_material.set_shader_parameter("stroke", _stroke_viewport.get_texture())
-	await finish_stroke()
 
 
 ## Clears the result with a color or a texture.
@@ -115,6 +114,7 @@ func finish_stroke() -> void:
 			_result_viewport.get_texture().get_image()))
 	
 	# Clear the stroke viewport by hiding the mesh.
+	_stroke_viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ONCE
 	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	_mesh_instance.hide()
 	await RenderingServer.frame_post_draw

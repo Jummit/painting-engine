@@ -104,7 +104,7 @@ var _paint_queue: Array[PaintOperation]
 var _last_screen_pos: Vector2
 
 ## Path to the folder of textures used for undo/redo.
-const TEXTURE_PATH := "user://undo_textures/{painter}"
+const TEXTURE_PATH := "user://undo_textures/painter_{painter}"
 
 const _MAX_STROKES_PER_OPERATION := 10
 
@@ -127,6 +127,7 @@ func init(model : MeshInstance3D, result_size := Vector2(1024, 1024), channels :
 	_model = model
 	_result_size = result_size
 	_texture_store = TexturePackStore.new(TEXTURE_PATH.format({painter=get_instance_id()}))
+	_texture_store.clear()
 	var shape := ConcavePolygonShape3D.new()
 	shape.set_faces(_model.mesh.get_faces())
 	_collision_shape.shape = shape
@@ -143,6 +144,7 @@ func clear_with(values : Array) -> void:
 		if values[channel]:
 			var channel_painter := _get_channel_painter(channel)
 			await channel_painter.clear_with(values[channel])
+	_current_pack = _store_results()
 
 
 ## Returns the painted result of the given channel.
@@ -242,7 +244,7 @@ func reset_channels(count : int) -> void:
 ## Delete textures used for undo/redo from disk.
 func cleanup() -> void:
 	_assert_ready()
-	_texture_store.cleanup()
+	_texture_store.clear()
 
 
 # Starting from nothing, retrace the painting steps with the specified
@@ -394,11 +396,11 @@ func _remove_operations(count : int) -> void:
 # file IO.
 func _create_stroke_action(thread : Thread) -> void:
 	_undo_redo.create_action("Paintstroke")
-	#_undo_redo.add_do_method(_store_operations.bind(_stroke_operations))
-	#_undo_redo.add_undo_method(_remove_operations.bind(_stroke_operations.size()))
+	_undo_redo.add_do_method(_store_operations.bind(_stroke_operations))
+	_undo_redo.add_undo_method(_remove_operations.bind(_stroke_operations.size()))
 	var pack := _store_results()
-	#_undo_redo.add_do_method(_load_results.bind(pack))
-	#_undo_redo.add_undo_method(_load_results.bind(_current_pack))
+	_undo_redo.add_do_method(_load_results.bind(pack))
+	_undo_redo.add_undo_method(_load_results.bind(_current_pack))
 	_undo_redo.commit_action()
 	thread.call_deferred("wait_to_finish")
 

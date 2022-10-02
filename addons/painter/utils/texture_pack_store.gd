@@ -21,12 +21,12 @@ var max_packs_on_disk := 30
 var _packs : Array
 var _last_id := 0
 var _save_threads : Dictionary
-var _path : String
+var _folder : String
 
 class Pack extends RefCounted:
 	var textures : Array
 	var file_count : int
-	var file_on_disk : String
+	var saved : Array[String]
 	var save : Callable
 	var id : int
 	var thread : Thread
@@ -37,43 +37,37 @@ class Pack extends RefCounted:
 		id = _id
 	
 	func get_textures() -> Array:
-		if textures.is_empty() and not file_on_disk.is_empty():
+		if textures.is_empty() and not saved.is_empty():
 			# Move textures back to memory.
-			for file_num in file_count:
-				var image := Image.new()
-				image.load(file_on_disk % file_num)
-				var texture := ImageTexture.new()
-				texture.create_from_image(image)
-				DirAccess.remove_absolute(file_on_disk % file_num)
-				print("Deleted and loaded '", file_on_disk % file_num)
-				textures.append(texture)
+			for file in saved:
+				textures.append(ImageTexture.create_from_image(Image.load_from_file(file)))
+				print("Deleted and loaded '", file)
+			erase_from_disk()
 		return textures
 	
 	func save_to_disk() -> void:
 		save.call(self)
 	
 	func erase_from_disk() -> void:
-		if file_on_disk.is_empty():
+		if saved.is_empty():
 			return
-		for texture_num in file_count:
-			DirAccess.remove_absolute(file_on_disk % texture_num)
-	
-	func get_path_on_disk(texture : int) -> String:
-		if file_on_disk.is_empty():
-			return ""
-		return file_on_disk % str(texture - 1)
+		for file in saved:
+			DirAccess.remove_absolute(file)
+		DirAccess.remove_absolute(saved.front().get_base_dir())
+		saved.clear()
 	
 	func _notification(what):
-		if what == NOTIFICATION_PREDELETE and file_on_disk:
+		if what == NOTIFICATION_PREDELETE and not saved.is_empty():
 			# Can't call functions here, see
 			# https://github.com/godotengine/godot/issues/31166.
 #			erase_from_disk()
-			for texture_num in file_count:
-				DirAccess.remove_absolute(file_on_disk % texture_num)
+			for file in saved:
+				DirAccess.remove_absolute(file)
+			saved.clear()
+			DirAccess.remove_absolute(saved.front().get_base_dir)
 
 func _init(path : String):
-	_path = path.path_join("/%s_%s.png")
-	DirAccess.remove_absolute(path)
+	_folder = path
 	DirAccess.make_dir_recursive_absolute(path)
 
 
@@ -97,26 +91,22 @@ func add_textures(new_textures : Array) -> Pack:
 		# Don't free it, just clear the disk and memory space.
 		on_disk.front().get_ref().textures.clear()
 		on_disk.front().get_ref().erase_from_disk()
-		on_disk.front().get_ref().file_on_disk = ""
 		_packs.erase(on_disk.front())
 	return new_pack
 
 
-func cleanup() -> void:
-	# Because remove_at doesn't delete recursively, delete the packs one-by one.
-	for pack in _packs:
-		if pack.get_ref():
-			pack.get_ref().erase_from_disk()
-	# TODO: remove this, maybe make verbose?
-	print("clean ", _path.get_base_dir())
-	OS.move_to_trash(_path.get_base_dir())
+func clear() -> void:
+	var path := ProjectSettings.globalize_path(_folder)
+	if DirAccess.dir_exists_absolute(path):
+		print("Cleared ", path)
+		OS.move_to_trash(path)
 
 
 func _get_packs(in_memory : bool) -> Array:
 	var packs := []
 	for pack in _packs:
 		if pack.get_ref():
-			var pack_in_memory : bool = (pack.get_ref() as Pack).file_on_disk.is_empty()\
+			var pack_in_memory : bool = (pack.get_ref() as Pack).saved.is_empty()\
 				and not pack.get_ref().id in _save_threads
 			if in_memory == pack_in_memory:
 				packs.append(pack)
@@ -126,7 +116,6 @@ func _get_packs(in_memory : bool) -> Array:
 func _save_to_disk_if_needed() -> void:
 	var packs_in_memory := _get_packs(true)
 	if packs_in_memory.size() > max_packs_in_memory:
-		print("save to disk")
 		packs_in_memory.front().get_ref().save_to_disk()
 
 
@@ -139,13 +128,15 @@ func _save_pack(pack : Pack):
 
 
 func _threaded_save_to_disk(pack : Pack) -> void:
-	var path := _path % [pack.id, "%s"]
+	var base := _folder.path_join(str(pack.id))
+	DirAccess.make_dir_recursive_absolute(base)
 	for texture_num in pack.textures.size():
 		# TODO: remove this or make verbose
-		print(pack.textures[texture_num], path % texture_num)
-		pack.textures[texture_num].get_image().save_png(path % texture_num)
+		var path := base.path_join(str(texture_num) + ".png")
+		print("Saved to ", path)
+		pack.textures[texture_num].get_image().save_png(path)
+		pack.saved.append(path)
 	pack.textures.clear()
-	pack.file_on_disk = path
 	call_deferred("_save_thread_completed", pack.id)
 
 

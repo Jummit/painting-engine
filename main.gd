@@ -33,6 +33,13 @@ const CHANNELS = {
 
 func _ready() -> void:
 	setup_painter()
+	get_tree().auto_accept_quit = false
+
+
+func _notification(what):
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		painter.cleanup()
+		get_tree().quit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
