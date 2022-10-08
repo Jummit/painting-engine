@@ -97,9 +97,11 @@ func add_textures(new_textures : Array) -> Pack:
 
 func clear() -> void:
 	var path := ProjectSettings.globalize_path(_folder)
-	if DirAccess.dir_exists_absolute(path):
-		print("Cleared ", path)
-		OS.move_to_trash(path)
+	var dir := DirAccess.open(path)
+	if dir:
+		dir.remove(".")
+		if dir.dir_exists("."):
+			OS.move_to_trash(path)
 
 
 func _get_packs(in_memory : bool) -> Array:
