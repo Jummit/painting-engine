@@ -1,9 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://bxk0g87bgor6i"]
+[gd_scene load_steps=6 format=3 uid="uid://bxk0g87bgor6i"]
 
 [ext_resource type="Script" path="res://addons/painter/channel_painter/channel_painter.gd" id="1"]
 [ext_resource type="Shader" path="res://addons/painter/channel_painter/result.gdshader" id="2"]
 [ext_resource type="Shader" path="res://addons/painter/channel_painter/stroke.gdshader" id="3"]
-[ext_resource type="Material" uid="uid://qmo25w7il1r7" path="res://addons/painter/channel_painter/premult_alpha.material" id="4"]
 
 [sub_resource type="ShaderMaterial" id="2"]
 resource_local_to_scene = true
@@ -39,12 +38,12 @@ grow_vertical = 2
 color = Color(1, 1, 1, 0)
 
 [node name="ClearTextureRect" type="TextureRect" parent="ResultViewport"]
-material = ExtResource("4")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+ignore_texture_size = true
 
 [node name="ResultTextureRect" type="ColorRect" parent="ResultViewport"]
 material = SubResource("2")
