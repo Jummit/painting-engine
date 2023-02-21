@@ -1,3 +1,4 @@
+class_name TexturePackStore
 extends RefCounted
 
 ## Utility for saving and loading textures to memory or disk.
@@ -5,7 +6,7 @@ extends RefCounted
 ## [b]Example Usage:[/b]
 ## [codeblock]
 ## var store = TexturePackStore.new("user://textures")
-## stare.max_packs_in_memory = 1
+## store.max_packs_in_memory = 1
 ## var pack_a = store.add_textures([a, b, c])
 ## var pack_b = store.add_textures([d, e, f])
 ## var a_textures = pack_a.get_textures()
@@ -41,7 +42,7 @@ class Pack extends RefCounted:
 			# Move textures back to memory.
 			for file in saved:
 				textures.append(ImageTexture.create_from_image(Image.load_from_file(file)))
-				print("Deleted and loaded '", file)
+				print_verbose("Deleted and loaded '", file)
 			erase_from_disk()
 		return textures
 	
@@ -87,7 +88,7 @@ func add_textures(new_textures : Array) -> Pack:
 	var on_disk := _get_packs(false)
 	if on_disk.size() > max_packs_on_disk:
 		# TODO: remove this, maybe make verbose?
-		print("too many saved")
+		print_verbose("too many saved")
 		# Don't free it, just clear the disk and memory space.
 		on_disk.front().get_ref().textures.clear()
 		on_disk.front().get_ref().erase_from_disk()
@@ -135,7 +136,7 @@ func _threaded_save_to_disk(pack : Pack) -> void:
 	for texture_num in pack.textures.size():
 		# TODO: remove this or make verbose
 		var path := base.path_join(str(texture_num) + ".png")
-		print("Saved to ", path)
+		print_verbose("Saved to ", path)
 		pack.textures[texture_num].get_image().save_png(path)
 		pack.saved.append(path)
 	pack.textures.clear()

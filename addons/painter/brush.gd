@@ -90,12 +90,13 @@ func duplicate() -> Object:
 
 ## Returns the list of transforms that result when the given transform is
 ## mirrored using this brush's symmetry options.
-func apply_symmetry(transform : Transform3D) -> Array:
+func apply_symmetry(transform : Transform3D) -> Array[Transform3D]:
 	if symmetry and symmetry_axis == Vector3():
 		push_warning("Using symmetry but no symmetry axis is set.")
 	match symmetry:
 		Symmetry.MIRROR:
-			var transforms := [transform]
+			var transforms : Array[Transform3D] = []
+			transforms.append(transform)
 			if symmetry_axis.x:
 				transforms = _get_mirrored(transforms, Basis.FLIP_X)
 			if symmetry_axis.y:
@@ -110,7 +111,9 @@ func apply_symmetry(transform : Transform3D) -> Array:
 				var rotated := transform.rotated(symmetry_axis, angle)
 				transforms.append(rotated)
 			return transforms
-	return [transform]
+	var transforms : Array[Transform3D] = []
+	transforms.append(transform)
+	return transforms
 
 
 ## Returns the given transform with its rotation and origin mirrored using a

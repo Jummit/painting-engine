@@ -264,7 +264,7 @@ func _assert_ready() -> void:
 # Perform a paint operation.
 func _do_paint(operations : Array[PaintOperation]) -> void:
 	if _painting:
-		_paint_queue += operations
+		_paint_queue.append_array(operations)
 		return
 	_painting = true
 	_stroke_operations += operations

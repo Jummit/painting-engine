@@ -31,13 +31,13 @@ class EditableBrush:
 			"color":
 				brush.colors = [value]
 			"texture":
-				var texture := load_texture(value)
+				var texture := EditableBrush.load_texture(value)
 				if texture:
 					brush.textures = [texture]
 				else:
 					brush.textures = []
 			"stencil":
-				brush.stencil = load_texture(value)
+				brush.stencil = EditableBrush.load_texture(value)
 			"symmetry":
 				brush.symmetry = Brush.Symmetry[value]
 			"symmetry_axis":
@@ -47,7 +47,7 @@ class EditableBrush:
 			"size_space":
 				brush.size_space = Brush.SizeSpace[value]
 			"tip":
-				brush.tip = load_texture(value)
+				brush.tip = EditableBrush.load_texture(value)
 			_:
 				if property in brush:
 					brush[property] = value
@@ -62,7 +62,7 @@ class EditableBrush:
 			"texture":
 				return brush.get_texture(0)
 			"stencil":
-				@warning_ignore(incompatible_ternary)
+				@warning_ignore("incompatible_ternary")
 				return null if not brush.stencil else brush.stencil.resource_path
 			"symmetry":
 				return Brush.Symmetry.keys()[brush.symmetry]

@@ -5,10 +5,6 @@ extends Node3D
 ## The brush settings can be configured in a panel to the right. The mesh can be
 ## switched and the result saved as a png.
 
-const Brush = preload("addons/painter/brush.gd")
-const Painter = preload("addons/painter/painter.gd")
-const PropertyPanel = preload("res://addons/property_panel/property_panel.gd")
-
 var changing_size : bool
 var change_start_value : float
 var last_stencil : Transform2D
