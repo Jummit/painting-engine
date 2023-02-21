@@ -57,9 +57,8 @@ func paint(operations : Array[PaintOperation]) -> void:
 	# to allow for on-the-fly changes.
 	var brush : Brush = operations.front().brush
 	
-	var transforms: Array[Transform3D] = []
-	transforms.assign(operations.map(
-			func(o: PaintOperation): return o.brush_transform))
+	var transforms: Array[Transform3D] = operations.map(
+			func(o: PaintOperation): return o.brush_transform)
 	_stroke_material.set_shader_parameter("brush_transforms",
 			_mat_to_float_array(transforms))
 	var colors : Array[Color]
