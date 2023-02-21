@@ -61,42 +61,42 @@ const PaintOperation = preload("paint_operation.gd")
 ## The brush settings used for painting the model.
 var brush := Brush.new()
 
-# Emitted after the stored results are applied to the paint viewports.
+## Emitted after the stored results are applied to the paint viewports.
 signal _results_loaded
 signal _paint_completed
 
 # Initial State
 
-# The model being painted. The MeshInstance3D is used to determine the transform
-# and mesh.
+## The model being painted. The MeshInstance3D is used to determine the transform
+## and mesh.
 var _model : MeshInstance3D
-# The size of the resulting texture. Preferably square with the width and hight
-# being a power of two.
+## The size of the resulting texture. Preferably square with the width and hight
+## being a power of two.
 var _result_size : Vector2
 var _undo_redo := UndoRedo.new()
-# Util for saving and loading sets of textures to memory/disk.
-# Used for undo/redo.
+## Util for saving and loading sets of textures to memory/disk.
+## Used for undo/redo.
 var _texture_store : TexturePackStore
-# Utility texture used by the result shader to eliminate seams.
+## Utility texture used by the result shader to eliminate seams.
 var _seams_texture : Texture2D
-# The number of painting viewports available.
+## The number of painting viewports available.
 var _channels : int
 
 # Runtime State
 
-# The set of textures that the model currently has applied.
-var _current_pack# : TexturePackStore.Pack
-# While the stroke is not finished this stores where the user last painted.
+## The set of textures that the model currently has applied.
+var _current_pack : TexturePackStore.Pack
+## While the stroke is not finished this stores where the user last painted.
 var _last_transform : Transform3D
-# Stores if the user successfully painted since the last stroke.
+## Stores if the user successfully painted since the last stroke.
 var _result_stored := false
-# Next random size.
+## Next random size.
 var _next_size := randf()
-# Next random angle.
+## Next random angle.
 var _next_angle := randf()
-# List of paint operations.
+## List of paint operations.
 var _session : Array
-# The paint operations of the current stroke.
+## The paint operations of the current stroke.
 var _stroke_operations : Array
 # If a paint operation is in progress.
 var _painting : bool
@@ -247,24 +247,24 @@ func cleanup() -> void:
 	_texture_store.clear()
 
 
-# Starting from nothing, retrace the painting steps with the specified
-# resolution. This could take a while.
+## Starting from nothing, retrace the painting steps with the specified
+## resolution. This could take a while.
 func repaint(resolution : Vector2) -> void:
 	_assert_ready()
 	pass
 
 
-# Assert that the painter was initialized before calling a method.
+## Assert that the painter was initialized before calling a method.
 func _assert_ready() -> void:
 	assert(_model, "Painter not initialized.")
 
 
 ### Painting ###
 
-# Perform a paint operation.
+## Perform a paint operation.
 func _do_paint(operations : Array[PaintOperation]) -> void:
 	if _painting:
-		_paint_queue.append_array(operations)
+		_paint_queue += operations
 		return
 	_painting = true
 	_stroke_operations += operations
@@ -281,15 +281,15 @@ func _do_paint(operations : Array[PaintOperation]) -> void:
 		await _do_paint(next)
 
 
-# Returns the ChannelPainter of the given channel.
+## Returns the ChannelPainter of the given channel.
 func _get_channel_painter(channel : int) -> ChannelPainter:
 	return _channel_painters.get_child(channel) as ChannelPainter
 
 
 # Brush Placement
 
-# Returns the transforms for meshes that show where the brush would paint at a
-# given screen position. Used by the brush preview.
+## Returns the transforms for meshes that show where the brush would paint at a
+## given screen position. Used by the brush preview.
 func get_brush_preview_transforms(screen_pos : Vector2,
 		pressure := 1.0, on_surface := true) -> Array:
 	var transforms := _get_brush_transforms(screen_pos, pressure, true)
@@ -301,10 +301,9 @@ func get_brush_preview_transforms(screen_pos : Vector2,
 	return [Transform3D(basis, position)]
 
 
-# Returns the transform of the brush when 
-# Returns an empty array if the brush didn't hit the mesh.
-# Pressure is required because it scales the transform if the brush is
-# configured to do so.
+## Returns an empty array if the brush didn't hit the mesh.
+## Pressure is required because it scales the transform if the brush is
+## configured to do so.
 func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 		preview := false) -> Array[Transform3D]:
 	var hit := _cast_ray(screen_pos)
@@ -341,7 +340,7 @@ func _cast_ray(screen_pos : Vector2) -> Dictionary:
 	return _static_body.get_world_3d().direct_space_state.intersect_ray(ray)
 
 
-# Returns the surface-space transform on the given screen position.
+## Returns the surface-space transform on the given screen position.
 func _get_transform_from_hit(result : Dictionary) -> Transform3D:
 	if result.is_empty():
 		return Transform3D()
@@ -354,8 +353,8 @@ func _get_transform_from_hit(result : Dictionary) -> Transform3D:
 	return Transform3D(basis, origin)
 
 
-# Returns a basis that points from a given point to another, keeping forward
-# the z axis.
+## Returns a basis that points from a given point to another, keeping forward
+## the z axis.
 static func _get_basis_pointed_towards(from : Vector3, to : Vector3,
 		forward : Vector3) -> Basis:
 	var z := forward
@@ -366,8 +365,8 @@ static func _get_basis_pointed_towards(from : Vector3, to : Vector3,
 	return Basis(x, y, z).orthonormalized()
 
 
-# Returns a basis that scales and rotates the brush transform according to the
-# brush and the pressure.
+## Returns a basis that scales and rotates the brush transform according to the
+## brush and the pressure.
 func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 	var random_scale : float = lerp(1.0, _next_size, brush.size_jitter)
 	var scale := brush.size
@@ -381,19 +380,19 @@ func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
 
 ### Undo/Redo ##
 
-# Append the operations
+## Append the operations
 func _store_operations(operations : Array) -> void:
 	_session += operations
 
 
-# Remove the given number of operations from the session.
+## Remove the given number of operations from the session.
 func _remove_operations(count : int) -> void:
 	_session.resize(_session.size() - count)
 
 
-# Create a stroke action which stores the results so they can be applied when
-# the stroke is undone. Perform [_store_results] on a thread as it uses slow
-# file IO.
+## Create a stroke action which stores the results so they can be applied when
+## the stroke is undone. Perform [_store_results] on a thread as it uses slow
+## file IO.
 func _create_stroke_action(thread : Thread) -> void:
 	_undo_redo.create_action("Paintstroke")
 	_undo_redo.add_do_method(_store_operations.bind(_stroke_operations))
@@ -405,7 +404,7 @@ func _create_stroke_action(thread : Thread) -> void:
 	thread.call_deferred("wait_to_finish")
 
 
-# Add the channel results in the texture store and return the new pack.
+## Add the channel results in the texture store and return the new pack.
 func _store_results() -> TexturePackStore.Pack:
 	var results := []
 	for channel in _channels:
@@ -413,8 +412,8 @@ func _store_results() -> TexturePackStore.Pack:
 	return _texture_store.add_textures(results)
 
 
-# Set the pack of textures as the current result. Emits [_result_loaded] when
-# finished so it can be awaited when used inside a thread or [UndoRedo] call.
+## Set the pack of textures as the current result. Emits [_result_loaded] when
+## finished so it can be awaited when used inside a thread or [UndoRedo] call.
 func _load_results(pack) -> void:# : TexturePackStore.Pack) -> void:
 	if pack != _current_pack:
 		_current_pack = pack
