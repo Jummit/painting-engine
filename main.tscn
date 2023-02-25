@@ -43,7 +43,7 @@ mesh = ExtResource("1")
 
 [node name="NavigationCamera" type="Camera3D" parent="."]
 unique_name_in_owner = true
-transform = Transform3D(-0.730143, -0.216297, 0.648157, 0, 0.948576, 0.31655, -0.683295, 0.231126, -0.692596, 4.80166, 2.34506, -5.13087)
+transform = Transform3D(-0.664675, -0.236505, 0.708713, 0, 0.948576, 0.31655, -0.747133, 0.210402, -0.630494, 3.648, 1.69748, -3.21943)
 current = true
 script = ExtResource("2")
 
@@ -58,8 +58,8 @@ environment = SubResource("Environment_kd550")
 [node name="SaveButton" type="Button" parent="."]
 offset_left = 12.0
 offset_top = 10.0
-offset_right = 97.0
-offset_bottom = 30.0
+offset_right = 119.0
+offset_bottom = 41.0
 text = "Save Result"
 
 [node name="MeshOptionButton" type="OptionButton" parent="."]
