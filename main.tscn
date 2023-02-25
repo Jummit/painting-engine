@@ -5,7 +5,7 @@
 [ext_resource type="Script" path="res://brush_property_panel.gd" id="3"]
 [ext_resource type="Script" path="res://main.gd" id="4"]
 [ext_resource type="PackedScene" uid="uid://bgscj5isj15uq" path="res://addons/painter/preview/brush_preview.tscn" id="5"]
-[ext_resource type="PackedScene" uid="uid://5hbue53l27is" path="res://addons/painter/preview/stencil_preview.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://addons/painter/preview/stencil_preview.tscn" id="6"]
 [ext_resource type="PackedScene" uid="uid://duguqkmmg4tol" path="res://addons/property_panel/property_panel.tscn" id="8"]
 [ext_resource type="Script" path="res://TextureRect.gd" id="8_sdgh6"]
 
@@ -115,9 +115,11 @@ script = ExtResource("3")
 
 [node name="StencilPreview" parent="." instance=ExtResource("6")]
 unique_name_in_owner = true
+anchors_preset = 15
 offset_right = 0.0
 grow_horizontal = 2
 grow_vertical = 2
+expand_mode = 1
 painter = NodePath("")
 
 [node name="FileDialog" type="FileDialog" parent="."]
@@ -143,6 +145,5 @@ offset_bottom = 297.0
 
 [connection signal="pressed" from="SaveButton" to="." method="_on_SaveButton_pressed"]
 [connection signal="item_selected" from="MeshOptionButton" to="." method="_on_MeshOptionButton_item_selected"]
-[connection signal="property_changed" from="SideBar/VBoxContainer/BrushPropertyPanel" to="SideBar/VBoxContainer/BrushPropertyPanel" method="_on_property_changed"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
 [connection signal="text_changed" from="TextureRect/LineEdit" to="TextureRect" method="_on_line_edit_text_changed"]
