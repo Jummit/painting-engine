@@ -9,9 +9,12 @@ var changing_size : bool
 var change_start_value : float
 var last_stencil : Transform2D
 var change_start : Vector2
-var change_end : Vector2
 var painter : Painter
 var brush := Brush.new()
+## Where the user clicked to end resizing the brush.
+var released_at : Vector2
+## Tracking if a motion event should continue a stroke.
+var brush_down := false
 
 const BrushPropertyPanel = preload("res://brush_property_panel.gd")
 const StencilPreview = preload("res://addons/painter/preview/stencil_preview.gd")
@@ -112,17 +115,29 @@ func handle_stencil_input(event : InputEvent) -> bool:
 
 
 func handle_paint_input(event : InputEvent) -> void:
-	if Input.is_action_pressed("paint"):
-		var button_event := event as InputEventMouseButton
-		var motion_event := event as InputEventMouseMotion
-		if button_event:
-			painter.paint(button_event.position, brush, 1.0)
-		elif motion_event:
-			painter.paint_to(motion_event.position, brush, motion_event.pressure)
 	if event.is_action_released("paint"):
 		painter.finish_stroke()
 	elif event.is_action_pressed("toggle_eraser"):
 		brush.erase = not brush.erase
+	if Input.is_action_pressed("paint"):
+		var mouse_event := event as InputEventMouse
+		if mouse_event and released_at.distance_to(mouse_event.position) < 50:
+			# Don't paint after clicking to finish resizing brush.
+			return
+		released_at = Vector2.ZERO
+		var button_event := event as InputEventMouseButton
+		var motion_event := event as InputEventMouseMotion
+		if button_event:
+			painter.paint(button_event.position, brush, 1.0)
+			brush_down = true
+		elif motion_event:
+			if brush_down:
+				# Continue stroke.
+				painter.paint_to(motion_event.position, brush, motion_event.pressure)
+			else:
+				painter.paint(motion_event.position, brush, 1.0)
+	else:
+		brush_down = false
 
 
 func handle_brush_input(event : InputEvent) -> bool:
@@ -135,9 +150,9 @@ func handle_brush_input(event : InputEvent) -> bool:
 		brush_preview.follow_mouse = false
 		return true
 	elif button_event and changing_size:
+		released_at = get_viewport().get_mouse_position()
 		changing_size = false
 		brush_preview.follow_mouse = true
-		change_end = button_event.position
 	if motion_event and changing_size:
 		brush.size = clamp(change_start_value\
 			+ (motion_event.position.x - change_start.x) / 100.0, 0.05, 3.0)
