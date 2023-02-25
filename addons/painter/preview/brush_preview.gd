@@ -26,6 +26,7 @@ enum Appearance {
 
 ## If the preview should move with the mouse.
 var follow_mouse := true
+var brush : Brush
 
 var _painter : Painter
 ## An array of `SingleBrushPreviews`.
@@ -37,18 +38,21 @@ func _ready():
 
 
 func _input(event : InputEvent) -> void:
+	if not visible:
+		return
 	if not is_instance_valid(_painter):
+		push_warning("Visible brush preview doesn't have a valid painter assigned.")
 		return
-	var brush : Brush = _painter.brush
 	if not brush:
+		push_warning("Visible brush preview doesn't have a brush assigned.")
 		return
-
+	
 	var pressure := 1.0
 	if event is InputEventMouseMotion and event.button_mask == MOUSE_BUTTON_LEFT\
 			and brush.size_pen_pressure:
 		pressure = event.pressure
 	var transforms : Array = _painter.get_brush_preview_transforms(
-			get_viewport().get_mouse_position(), pressure, follow_mouse)
+			get_viewport().get_mouse_position(), brush, pressure, follow_mouse)
 	
 	# Add necessary amount of previews.
 	while _previews.size() < transforms.size():

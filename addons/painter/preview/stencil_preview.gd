@@ -2,26 +2,12 @@ extends TextureRect
 
 ## An overlay that shows the stencil of a brush.
 
-@export var painter := NodePath("../Painter"):
-	set(to):
-		painter = to
-		if to:
-			_painter = get_node(painter)
-
-const Painter = preload("res://addons/painter/painter.gd")
-
-var _painter : Painter
-const Brush = preload("res://addons/painter/brush.gd")
-
-func _ready():
-	painter = painter
-
+var brush: Brush
 
 func _input(_event: InputEvent) -> void:
-	if not is_instance_valid(_painter):
-		return
-	var brush : Brush = _painter.brush
 	if not brush:
+		if visible:
+			push_warning("Visible stencil preview doesn't have a brush assigned.")
 		return
 	texture = brush.stencil
 	var transform := brush.stencil_transform

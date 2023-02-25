@@ -58,9 +58,6 @@ const ChannelPainter = preload("channel_painter/channel_painter.gd")
 const CameraState = preload("camera_state.gd")
 const PaintOperation = preload("paint_operation.gd")
 
-## The brush settings used for painting the model.
-var brush := Brush.new()
-
 ## Emitted after the stored results are applied to the paint viewports.
 signal _results_loaded
 signal _paint_completed
@@ -73,7 +70,7 @@ var _model : MeshInstance3D
 ## The size of the resulting texture. Preferably square with the width and hight
 ## being a power of two.
 var _result_size : Vector2
-var _undo_redo := UndoRedo.new()
+var _undo_redo : UndoRedo
 ## Util for saving and loading sets of textures to memory/disk.
 ## Used for undo/redo.
 var _texture_store : TexturePackStore
@@ -123,10 +120,12 @@ func _notification(what : int) -> void:
 ## channels (textures) to paint, the brush and optionally an array of colors/
 ## textures that will be used as the starting texture.
 ## Should be called before doing anything else.
-func init(model : MeshInstance3D, result_size := Vector2(1024, 1024), channels := 1) -> void:
+func init(model : MeshInstance3D, result_size := Vector2(1024, 1024),
+		channels := 1, undo_redo := UndoRedo.new()) -> void:
 	_model = model
 	_result_size = result_size
 	_texture_store = TexturePackStore.new(TEXTURE_PATH.format({painter=get_instance_id()}))
+	_undo_redo = undo_redo
 	_texture_store.clear()
 	var shape := ConcavePolygonShape3D.new()
 	shape.set_faces(_model.mesh.get_faces())
@@ -157,11 +156,11 @@ func get_result(channel : int) -> ViewportTexture:
 
 ## Paint on the model at the given `screen_pos` using the [brush].
 ## Optionally the pen pressure can be provided.
-func paint(screen_pos : Vector2, pressure := 1.0) -> void:
+func paint(screen_pos : Vector2, brush : Brush, pressure := 1.0) -> void:
 	_assert_ready()
 	_last_screen_pos = screen_pos
 	# Verify the brush transforms.
-	var transforms := _get_brush_transforms(screen_pos, pressure)
+	var transforms := _get_brush_transforms(screen_pos, pressure, brush)
 	if transforms.is_empty():
 		return
 	var distance_to_last := _last_transform.origin.distance_to(
@@ -184,11 +183,12 @@ func paint(screen_pos : Vector2, pressure := 1.0) -> void:
 	_paint_completed.emit()
 
 
-func paint_to(screen_pos : Vector2, pressure := 1.0) -> void:
+## Pa
+func paint_to(screen_pos : Vector2, brush : Brush, pressure := 1.0) -> void:
 	# TODO: what should pressure be here
 	var current_last = _last_screen_pos
 	for i in 50:
-		paint(current_last.lerp(screen_pos, i / 50.0), pressure)
+		paint(current_last.lerp(screen_pos, i / 50.0), brush, pressure)
 
 
 ## Add a new stroke which can be undone using [method]undo[/method].
@@ -292,13 +292,13 @@ func _get_channel_painter(channel : int) -> ChannelPainter:
 
 ## Returns the transforms for meshes that show where the brush would paint at a
 ## given screen position. Used by the brush preview.
-func get_brush_preview_transforms(screen_pos : Vector2,
+func get_brush_preview_transforms(screen_pos : Vector2, brush : Brush,
 		pressure := 1.0, on_surface := true) -> Array:
-	var transforms := _get_brush_transforms(screen_pos, pressure, true)
+	var transforms := _get_brush_transforms(screen_pos, pressure, brush, true)
 	if not transforms.is_empty() and on_surface:
 		return transforms
 	var camera := _model.get_viewport().get_camera_3d()
-	var basis := _apply_brush_basis(camera.transform.basis, pressure)
+	var basis := _apply_brush_basis(camera.transform.basis, pressure, brush)
 	var position := camera.project_position(screen_pos, 2)
 	return [Transform3D(basis, position)]
 
@@ -307,7 +307,7 @@ func get_brush_preview_transforms(screen_pos : Vector2,
 ## Pressure is required because it scales the transform if the brush is
 ## configured to do so.
 func _get_brush_transforms(screen_pos : Vector2, pressure : float,
-		preview := false) -> Array[Transform3D]:
+		brush : Brush, preview := false) -> Array[Transform3D]:
 	var hit := _cast_ray(screen_pos)
 	var transform := _get_transform_from_hit(hit)
 	if transform == Transform3D():
@@ -328,7 +328,7 @@ func _get_brush_transforms(screen_pos : Vector2, pressure : float,
 		var camera := _model.get_viewport().get_camera_3d()
 		transform.basis = transform.basis.scaled(
 				Vector3.ONE * camera.position.distance_to(hit.position) / 10.0)
-	transform.basis = _apply_brush_basis(transform.basis, pressure)
+	transform.basis = _apply_brush_basis(transform.basis, pressure, brush)
 	return brush.apply_symmetry(transform)
 
 
@@ -369,7 +369,7 @@ static func _get_basis_pointed_towards(from : Vector3, to : Vector3,
 
 ## Returns a basis that scales and rotates the brush transform according to the
 ## brush and the pressure.
-func _apply_brush_basis(basis : Basis, pressure : float) -> Basis:
+func _apply_brush_basis(basis : Basis, pressure : float, brush : Brush) -> Basis:
 	var random_scale : float = lerp(1.0, _next_size, brush.size_jitter)
 	var scale := brush.size
 	if brush.size_pen_pressure:

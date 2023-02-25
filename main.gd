@@ -11,6 +11,7 @@ var last_stencil : Transform2D
 var change_start : Vector2
 var change_end : Vector2
 var painter : Painter
+var brush := Brush.new()
 
 const BrushPropertyPanel = preload("res://brush_property_panel.gd")
 const StencilPreview = preload("res://addons/painter/preview/stencil_preview.gd")
@@ -34,6 +35,9 @@ const CHANNELS = {
 func _ready() -> void:
 	setup_painter()
 	get_tree().auto_accept_quit = false
+	stencil_preview.brush = brush
+	brush_preview.brush = brush
+	delete_undo_textures()
 
 
 func _notification(what):
@@ -84,25 +88,25 @@ func handle_stencil_input(event : InputEvent) -> bool:
 	var viewport_ratio = Vector2(viewport_size).normalized()
 	if event.is_action("change_stencil") or event.is_action("grab_stencil"):
 		change_start = mouse
-		last_stencil = painter.brush.stencil_transform
+		last_stencil = brush.stencil_transform
 		last_stencil.x *= viewport_ratio.x
 		last_stencil.y *= viewport_ratio.y
 	if Input.is_action_pressed("grab_stencil"):
-		painter.brush.stencil_transform.origin = last_stencil.origin\
+		brush.stencil_transform.origin = last_stencil.origin\
 			+ (mouse - change_start) / Vector2(viewport_size)
 		return true
 	elif Input.is_action_pressed("change_stencil"):
 		var stencil_pos = last_stencil.origin * viewport_size
 		var start_rotation := -change_start.direction_to(stencil_pos).angle()
 		var new_rot := -mouse.direction_to(stencil_pos).angle()
-		painter.brush.stencil_transform = Transform2D(
+		brush.stencil_transform = Transform2D(
 				last_stencil.get_rotation() + (new_rot - start_rotation),
-				painter.brush.stencil_transform.origin)
+				brush.stencil_transform.origin)
 		var start_scale := change_start.distance_to(stencil_pos)
 		var stencil_scale := last_stencil.get_scale().x\
 				- (start_scale - mouse.distance_to(stencil_pos)) / 1000.0
-		painter.brush.stencil_transform.x /= viewport_ratio.x / stencil_scale
-		painter.brush.stencil_transform.y /= viewport_ratio.y / stencil_scale
+		brush.stencil_transform.x /= viewport_ratio.x / stencil_scale
+		brush.stencil_transform.y /= viewport_ratio.y / stencil_scale
 		return true
 	return false
 
@@ -112,13 +116,13 @@ func handle_paint_input(event : InputEvent) -> void:
 		var button_event := event as InputEventMouseButton
 		var motion_event := event as InputEventMouseMotion
 		if button_event:
-			painter.paint(button_event.position, 1.0)
+			painter.paint(button_event.position, brush, 1.0)
 		elif motion_event:
-			painter.paint_to(motion_event.position, motion_event.pressure)
+			painter.paint_to(motion_event.position, brush, motion_event.pressure)
 	if event.is_action_released("paint"):
 		painter.finish_stroke()
 	elif event.is_action_pressed("toggle_eraser"):
-		painter.brush.erase = not painter.brush.erase
+		brush.erase = not brush.erase
 
 
 func handle_brush_input(event : InputEvent) -> bool:
@@ -126,7 +130,7 @@ func handle_brush_input(event : InputEvent) -> bool:
 	var motion_event := event as InputEventMouseMotion
 	if event.is_action_pressed("change_size"):
 		changing_size = true
-		change_start_value = painter.brush.size
+		change_start_value = brush.size
 		change_start = get_viewport().get_mouse_position()
 		brush_preview.follow_mouse = false
 		return true
@@ -135,7 +139,7 @@ func handle_brush_input(event : InputEvent) -> bool:
 		brush_preview.follow_mouse = true
 		change_end = button_event.position
 	if motion_event and changing_size:
-		painter.brush.size = clamp(change_start_value\
+		brush.size = clamp(change_start_value\
 			+ (motion_event.position.x - change_start.x) / 100.0, 0.05, 3.0)
 	return false
 
@@ -146,18 +150,28 @@ func setup_painter() -> void:
 	painter = preload("res://addons/painter/painter.tscn").instantiate()
 	add_child(painter)
 	
-	var brush := Brush.new()
 	brush.tip = preload("res://assets/textures/soft_tip.png")
 	brush.colors.append(Color.DARK_SLATE_BLUE)
 	brush_property_panel.load_brush(brush)
 	
 	await painter.init(paintable_model, Vector2(2048, 2048), CHANNELS.size())
-	painter.brush = brush
 	painter.clear_with(CHANNELS.values())
 	for channel in CHANNELS.size():
 		paintable_model.material_override[
 				CHANNELS.keys()[channel] + "_texture"] =\
 				painter.get_result(channel)
-	
 	brush_preview.painter = painter.get_path()
-	stencil_preview.painter = painter.get_path()
+	brush_preview.show()
+
+
+func delete_undo_textures():
+	var undo_textures := DirAccess.open("user://undo_textures")
+	if undo_textures:
+		for folder in undo_textures.get_directories():
+			var sub := DirAccess.open(undo_textures.get_current_dir().path_join(folder))
+			for sub_folder in sub.get_directories():
+				var sub_sub := DirAccess.open(sub.get_current_dir().path_join(sub_folder))
+				for file in sub_sub.get_files():
+					var _err := sub_sub.remove(file)
+				var _err := sub.remove(sub_folder)
+			var _err := undo_textures.remove(folder)

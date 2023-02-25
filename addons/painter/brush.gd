@@ -95,7 +95,7 @@ func apply_symmetry(transform : Transform3D) -> Array[Transform3D]:
 		push_warning("Using symmetry but no symmetry axis is set.")
 	match symmetry:
 		Symmetry.MIRROR:
-			var transforms := [transform]
+			var transforms : Array[Transform3D] = [transform]
 			if symmetry_axis.x:
 				transforms = _get_mirrored(transforms, Basis.FLIP_X)
 			if symmetry_axis.y:
@@ -104,13 +104,15 @@ func apply_symmetry(transform : Transform3D) -> Array[Transform3D]:
 				transforms = _get_mirrored(transforms, Basis.FLIP_Z)
 			return transforms
 		Symmetry.RADIAL:
-			var transforms := []
+			var transforms : Array[Transform3D] = []
 			for symmetry_num in radial_symmetry_count:
 				var angle : float = TAU / radial_symmetry_count * symmetry_num
 				var rotated := transform.rotated(symmetry_axis, angle)
 				transforms.append(rotated)
 			return transforms
-	return [transform]
+	var transforms : Array[Transform3D]
+	transforms.append(transform)
+	return transforms
 
 
 ## Returns the given transform with its rotation and origin mirrored using a
