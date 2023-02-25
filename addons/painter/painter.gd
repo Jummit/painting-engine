@@ -165,7 +165,7 @@ func paint(screen_pos : Vector2, brush : Brush, pressure := 1.0) -> void:
 		return
 	var distance_to_last := _last_transform.origin.distance_to(
 			transforms.front().origin)
-	var minimum_spacing := brush.spacing * brush.size * transforms[0].basis.x.length()
+	var minimum_spacing := brush.spacing * transforms[0].basis.x.length()
 	if brush.size_pen_pressure:
 		minimum_spacing *= pressure
 	if _last_transform != Transform3D() and distance_to_last < minimum_spacing:
