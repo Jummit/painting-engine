@@ -171,7 +171,7 @@ func setup_painter() -> void:
 	painter = preload("res://addons/painter/painter.tscn").instantiate()
 	add_child(painter)
 	await painter.init(paintable_model, Vector2(2048, 2048), CHANNELS.size())
-	painter.clear_with(CHANNELS.values())
+	await painter.clear_with(CHANNELS.values())
 	for channel in CHANNELS.size():
 		paintable_model.material_override[
 				CHANNELS.keys()[channel] + "_texture"] =\
