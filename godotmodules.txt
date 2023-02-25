@@ -1,3 +1,2 @@
 https://github.com/Jummit/navigation-camera.git f26e0ba0
-https://github.com/Jummit/property-panel.git 4423334d
-https://github.com/Jummit/file-utils.git 6fbfe29f
+https://github.com/Jummit/property-panel.git 335d5995
