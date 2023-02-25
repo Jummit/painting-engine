@@ -199,9 +199,11 @@ func finish_stroke() -> void:
 		return
 	if _painting:
 		await _paint_completed
-	# TODO: use some sort of multiawait here
 	for channel in _channels:
-		await _get_channel_painter(channel).finish_stroke()
+		_get_channel_painter(channel).start_finishing_stroke()
+	await RenderingServer.frame_post_draw
+	for channel in _channels:
+		_get_channel_painter(channel).complete_finishing_stroke()
 	var thread := Thread.new()
 	thread.start(_create_stroke_action.bind(thread))
 	_result_stored = true

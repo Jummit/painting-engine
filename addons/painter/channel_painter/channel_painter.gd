@@ -86,6 +86,38 @@ func paint(operations : Array[PaintOperation]) -> void:
 	await RenderingServer.frame_post_draw
 
 
+## Apply the current stroke to the result.
+func finish_stroke() -> void:
+	start_finishing_stroke()
+	await RenderingServer.frame_post_draw
+	complete_finishing_stroke()
+
+
+## Set up everything to finish a stroke.
+## Prefer using [method finish_stroke], only call this if awaiting it
+## would be too slow.
+func start_finishing_stroke() -> void:
+	# To be able to add a new stroke ontop of the current result, a snapshot
+	# has to be created and given to the result shader.
+	_result_material.set_shader_parameter("previous",
+			ImageTexture.create_from_image(
+			_result_viewport.get_texture().get_image()))
+	
+	# Clear the stroke viewport by hiding the mesh.
+	_stroke_viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ONCE
+	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	_mesh_instance.hide()
+
+
+## Finish what [method start_finishing_stroke] started.
+func complete_finishing_stroke() -> void:
+	_mesh_instance.show()
+
+
+func get_result() -> ViewportTexture:
+	return _result_viewport.get_texture()
+
+
 static func _col_to_float_array(cols: Array[Color]) -> PackedFloat32Array:
 	var ar: PackedFloat32Array = []
 	for c in cols:
@@ -104,23 +136,3 @@ static func _mat_to_float_array(transforms: Array[Transform3D]) -> PackedFloat32
 				0,
 				t.origin.x, t.origin.y, t.origin.z, 1])
 	return ar
-
-
-## Apply the current stroke to the result.
-func finish_stroke() -> void:
-	# To be able to add a new stroke ontop of the current result, a snapshot
-	# has to be created and given to the result shader.
-	_result_material.set_shader_parameter("previous",
-			ImageTexture.create_from_image(
-			_result_viewport.get_texture().get_image()))
-	
-	# Clear the stroke viewport by hiding the mesh.
-	_stroke_viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ONCE
-	_stroke_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
-	_mesh_instance.hide()
-	await RenderingServer.frame_post_draw
-	_mesh_instance.show()
-
-
-func get_result() -> ViewportTexture:
-	return _result_viewport.get_texture()
