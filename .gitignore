@@ -4,17 +4,5 @@ build/
 export/
 
 # Godot Packages
-addons/node_referencer
 addons/navigation_camera
 addons/property_panel
-addons/WAT
-addons/file_utils
-
-# WAT Tests
-
-tests/metadata.json
-tests/results.xml
-
-# Mono-specific ignores
-.mono/
-data_*/
