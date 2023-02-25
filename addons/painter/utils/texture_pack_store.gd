@@ -63,8 +63,8 @@ class Pack extends RefCounted:
 #			erase_from_disk()
 			for file in saved:
 				DirAccess.remove_absolute(file)
-			saved.clear()
 			DirAccess.remove_absolute(saved.front().get_base_dir)
+			saved.clear()
 
 func _init(path : String):
 	_folder = path
