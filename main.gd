@@ -12,6 +12,9 @@ var change_start : Vector2
 var change_end : Vector2
 var painter : Painter
 
+const BrushPropertyPanel = preload("res://brush_property_panel.gd")
+const StencilPreview = preload("res://addons/painter/preview/stencil_preview.gd")
+
 const CHANNELS = {
 	albedo = Color.WHITE,
 	ao = Color.WHITE,
@@ -19,13 +22,14 @@ const CHANNELS = {
 	roughness = Color.WHITE,
 }
 
-@onready var brush_property_panel = %BrushPropertyPanel
-@onready var brush_preview = %BrushPreview
-@onready var paintable_model = %PaintableModel
-@onready var camera = %NavigationCamera
-@onready var stencil_preview = %StencilPreview
-@onready var file_dialog = %FileDialog
-@onready var mesh_option_button = %MeshOptionButton
+@onready var brush_property_panel : BrushPropertyPanel = %BrushPropertyPanel
+@onready var brush_preview : BrushPreview = %BrushPreview
+@onready var paintable_model : MeshInstance3D = %PaintableModel
+@onready var camera : NavigationCamera = %NavigationCamera
+@onready var stencil_preview : StencilPreview = %StencilPreview
+@onready var file_dialog : FileDialog = %FileDialog
+@onready var mesh_option_button : OptionButton = %MeshOptionButton
+@onready var error_dialog: AcceptDialog = $ErrorDialog
 
 func _ready() -> void:
 	setup_painter()
@@ -49,9 +53,9 @@ func _unhandled_key_input(event : InputEvent) -> void:
 	if event.is_action_pressed("quit"):
 		get_tree().quit()
 	if event.is_action_pressed("redo"):
-		painter.redo()
+		var _success := await painter.redo()
 	elif event.is_action_pressed("undo"):
-		painter.undo()
+		var _success := await painter.undo()
 
 
 func _on_SaveButton_pressed() -> void:
@@ -61,7 +65,11 @@ func _on_SaveButton_pressed() -> void:
 func _on_FileDialog_file_selected(path : String) -> void:
 	var data = painter.get_result(0).get_image()
 	data.convert(Image.FORMAT_RGBA8)
-	data.save_png(path)
+	var err := data.save_png(path)
+	if err != OK:
+		error_dialog.dialog_text = "Couldn't save png to %s: %s" % [path,
+				error_string(err)]
+		error_dialog.popup_centered()
 
 
 func _on_MeshOptionButton_item_selected(index : int) -> void:
@@ -72,7 +80,7 @@ func _on_MeshOptionButton_item_selected(index : int) -> void:
 
 func handle_stencil_input(event : InputEvent) -> bool:
 	var mouse := get_viewport().get_mouse_position()
-	var viewport_size = get_viewport().size
+	var viewport_size = (get_viewport() as Window).size
 	var viewport_ratio = Vector2(viewport_size).normalized()
 	if event.is_action("change_stencil") or event.is_action("grab_stencil"):
 		change_start = mouse
@@ -101,10 +109,12 @@ func handle_stencil_input(event : InputEvent) -> bool:
 
 func handle_paint_input(event : InputEvent) -> void:
 	if Input.is_action_pressed("paint"):
-		if event is InputEventMouseButton:
-			painter.paint(event.position, 1.0)
-		elif event is InputEventMouseMotion:
-			painter.paint_to(event.position, event.pressure)
+		var button_event := event as InputEventMouseButton
+		var motion_event := event as InputEventMouseMotion
+		if button_event:
+			painter.paint(button_event.position, 1.0)
+		elif motion_event:
+			painter.paint_to(motion_event.position, motion_event.pressure)
 	if event.is_action_released("paint"):
 		painter.finish_stroke()
 	elif event.is_action_pressed("toggle_eraser"):
@@ -112,19 +122,21 @@ func handle_paint_input(event : InputEvent) -> void:
 
 
 func handle_brush_input(event : InputEvent) -> bool:
+	var button_event := event as InputEventMouseButton
+	var motion_event := event as InputEventMouseMotion
 	if event.is_action_pressed("change_size"):
 		changing_size = true
 		change_start_value = painter.brush.size
 		change_start = get_viewport().get_mouse_position()
 		brush_preview.follow_mouse = false
 		return true
-	elif event is InputEventMouseButton and changing_size:
+	elif button_event and changing_size:
 		changing_size = false
 		brush_preview.follow_mouse = true
-		change_end = event.position
-	if event is InputEventMouseMotion and changing_size:
+		change_end = button_event.position
+	if motion_event and changing_size:
 		painter.brush.size = clamp(change_start_value\
-			+ (event.position.x - change_start.x) / 100.0, 0.05, 3.0)
+			+ (motion_event.position.x - change_start.x) / 100.0, 0.05, 3.0)
 	return false
 
 
