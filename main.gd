@@ -14,9 +14,9 @@ var painter : Painter
 
 const CHANNELS = {
 	albedo = Color.WHITE,
-	#ao = Color.WHITE,
-	#normal = Color(0.5, 0.5, 1.0),
-	#roughness = Color.WHITE,
+	ao = Color.WHITE,
+	normal = Color(0.5, 0.5, 1.0),
+	roughness = Color.WHITE,
 }
 
 @onready var brush_property_panel = %BrushPropertyPanel
