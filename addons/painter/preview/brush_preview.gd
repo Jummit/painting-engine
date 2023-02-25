@@ -15,9 +15,7 @@ enum Appearance {
 	set(to):
 		appearance = to
 		for preview in _previews:
-			preview.set_surface_override_material(0, preload("brush_preview.material") if\
-					appearance == Appearance.BRUSH else\
-					preload("circle_preview.material"))
+			preview.set_surface_override_material(0, _get_material())
 @export var painter := NodePath("../Painter") :
 	set(to):
 		painter = to
@@ -56,7 +54,8 @@ func _input(event : InputEvent) -> void:
 	
 	# Add necessary amount of previews.
 	while _previews.size() < transforms.size():
-		var new := preload("single_brush_preview.tscn").instantiate()
+		var new : MeshInstance3D = preload("single_brush_preview.tscn").instantiate()
+		new.set_surface_override_material(0, _get_material())
 		add_child(new)
 		_previews.append(new)
 	appearance = appearance
@@ -80,3 +79,8 @@ func _input(event : InputEvent) -> void:
 			material.set_shader_parameter("albedo", brush.get_texture(0))
 			material.set_shader_parameter("color", brush.get_color(0))
 			material.set_shader_parameter("tip", brush.tip)
+
+
+func _get_material() -> Material:
+	return preload("brush_preview.material") if appearance == Appearance.BRUSH\
+			else preload("circle_preview.material")
