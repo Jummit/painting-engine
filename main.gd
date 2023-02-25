@@ -17,10 +17,10 @@ const BrushPropertyPanel = preload("res://brush_property_panel.gd")
 const StencilPreview = preload("res://addons/painter/preview/stencil_preview.gd")
 
 const CHANNELS = {
-	albedo = Color.WHITE,
+	albedo = Color(0.8, 0.8, 0.8),
 	ao = Color.WHITE,
 	normal = Color(0.5, 0.5, 1.0),
-	roughness = Color.WHITE,
+	roughness = Color(0.8, 0.8, 0.8),
 }
 
 @onready var brush_property_panel : BrushPropertyPanel = %BrushPropertyPanel
