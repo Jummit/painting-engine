@@ -183,7 +183,7 @@ func paint(screen_pos : Vector2, brush : Brush, pressure := 1.0) -> void:
 	_paint_completed.emit()
 
 
-## Pa
+## Paint a line from the last painted position to the given position.
 func paint_to(screen_pos : Vector2, brush : Brush, pressure := 1.0) -> void:
 	# TODO: what should pressure be here
 	var current_last = _last_screen_pos
