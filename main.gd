@@ -22,8 +22,8 @@ const StencilPreview = preload("res://addons/painter/preview/stencil_preview.gd"
 const CHANNELS = {
 	albedo = Color(0.8, 0.8, 0.8),
 	ao = Color.WHITE,
-	normal = Color(0.5, 0.5, 1.0),
 	roughness = Color(0.8, 0.8, 0.8),
+	normal = Color(0.5, 0.5, 1.0),
 }
 
 @onready var brush_property_panel : BrushPropertyPanel = %BrushPropertyPanel
@@ -31,13 +31,16 @@ const CHANNELS = {
 @onready var paintable_model : MeshInstance3D = %PaintableModel
 @onready var camera : NavigationCamera = %NavigationCamera
 @onready var stencil_preview : StencilPreview = %StencilPreview
-@onready var file_dialog : FileDialog = %FileDialog
+@onready var save_file_dialog : FileDialog = %SaveFileDialog
 @onready var mesh_option_button : OptionButton = %MeshOptionButton
 @onready var error_dialog: AcceptDialog = $ErrorDialog
 
 func _ready() -> void:
 	setup_painter()
 	get_tree().auto_accept_quit = false
+	brush.tip = preload("res://assets/textures/soft_tip.png")
+	brush.colors = [Color.DARK_SLATE_BLUE, Color.DARK_SLATE_BLUE, Color.DARK_SLATE_BLUE, Color(0.5, 0.5, 1.0)]
+	brush_property_panel.load_brush(brush)
 	stencil_preview.brush = brush
 	brush_preview.brush = brush
 	delete_undo_textures()
@@ -66,23 +69,26 @@ func _unhandled_key_input(event : InputEvent) -> void:
 
 
 func _on_SaveButton_pressed() -> void:
-	file_dialog.popup_centered_ratio()
-
-
-func _on_FileDialog_file_selected(path : String) -> void:
-	var data = painter.get_result(0).get_image()
-	data.convert(Image.FORMAT_RGBA8)
-	var err := data.save_png(path)
-	if err != OK:
-		error_dialog.dialog_text = "Couldn't save png to %s: %s" % [path,
-				error_string(err)]
-		error_dialog.popup_centered()
+	save_file_dialog.popup_centered_ratio(0.4)
 
 
 func _on_MeshOptionButton_item_selected(index : int) -> void:
 	paintable_model.mesh = load("res://assets/models/%s.obj" %\
 			mesh_option_button.get_item_text(index).to_lower())
 	setup_painter()
+
+
+func _on_save_file_dialog_dir_selected(dir: String) -> void:
+	var maps := CHANNELS.keys()
+	for map_num in maps.size():
+		var data = painter.get_result(map_num).get_image()
+		data.convert(Image.FORMAT_RGBA8)
+		var path := dir.path_join(maps[map_num]) + ".png"
+		var err := data.save_png(path)
+		if err != OK:
+			error_dialog.dialog_text = "Couldn't save png to %s: %s" % [path,
+					error_string(err)]
+			error_dialog.popup_centered()
 
 
 func handle_stencil_input(event : InputEvent) -> bool:
@@ -164,11 +170,6 @@ func setup_painter() -> void:
 		painter.queue_free()
 	painter = preload("res://addons/painter/painter.tscn").instantiate()
 	add_child(painter)
-	
-	brush.tip = preload("res://assets/textures/soft_tip.png")
-	brush.colors.append(Color.DARK_SLATE_BLUE)
-	brush_property_panel.load_brush(brush)
-	
 	await painter.init(paintable_model, Vector2(2048, 2048), CHANNELS.size())
 	painter.clear_with(CHANNELS.values())
 	for channel in CHANNELS.size():

@@ -12,6 +12,8 @@
 transparency = 2
 alpha_scissor_threshold = 0.5
 alpha_antialiasing_mode = 0
+normal_enabled = true
+ao_enabled = true
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_v6wh7"]
 sky_horizon_color = Color(0.629583, 0.652716, 0.6875, 1)
@@ -119,11 +121,14 @@ offset_right = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="FileDialog" type="FileDialog" parent="."]
+[node name="SaveFileDialog" type="FileDialog" parent="."]
 unique_name_in_owner = true
+editor_description = "File dialog used to select where the results should be saved."
+title = "Open a Directory"
+size = Vector2i(726, 600)
+ok_button_text = "Select Current Folder"
+file_mode = 2
 access = 2
-filters = PackedStringArray("*.png ; PNG Images")
-show_hidden_files = true
 
 [node name="ErrorDialog" type="AcceptDialog" parent="."]
 initial_position = 2
@@ -132,4 +137,4 @@ title = "Error"
 [connection signal="pressed" from="SaveButton" to="." method="_on_SaveButton_pressed"]
 [connection signal="item_selected" from="MeshOptionButton" to="." method="_on_MeshOptionButton_item_selected"]
 [connection signal="property_changed" from="SideBar/VBoxContainer/BrushPropertyPanel" to="SideBar/VBoxContainer/BrushPropertyPanel" method="_on_property_changed"]
-[connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
+[connection signal="dir_selected" from="SaveFileDialog" to="." method="_on_save_file_dialog_dir_selected"]

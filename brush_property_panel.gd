@@ -29,7 +29,8 @@ class EditableBrush:
 	func _set(property: StringName, value) -> bool:
 		match str(property):
 			"color":
-				brush.colors = [value]
+				# TODO: Maybe expose all channels.
+				brush.colors = [value, value, value, Color(0.5, 0.5, 1.0)]
 			"texture":
 				var texture := EditableBrush.load_texture(value)
 				if texture:
