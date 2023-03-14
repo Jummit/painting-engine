@@ -16,17 +16,12 @@ enum Appearance {
 		appearance = to
 		for preview in _previews:
 			preview.set_surface_override_material(0, _get_material())
-@export var painter := NodePath("../Painter") :
-	set(to):
-		painter = to
-		if to:
-			_painter = get_node(painter)
+@export var painter : Painter
 
 ## If the preview should move with the mouse.
 var follow_mouse := true
 var brush : Brush
 
-var _painter : Painter
 ## An array of `SingleBrushPreviews`.
 var _previews : Array
 var _brush_preview_material := ShaderMaterial.new()
@@ -38,7 +33,7 @@ func _ready():
 func _input(event : InputEvent) -> void:
 	if not visible:
 		return
-	if not is_instance_valid(_painter):
+	if not is_instance_valid(painter):
 		push_warning("Visible brush preview doesn't have a valid painter assigned.")
 		return
 	if not brush:
@@ -49,7 +44,7 @@ func _input(event : InputEvent) -> void:
 	if event is InputEventMouseMotion and event.button_mask == MOUSE_BUTTON_LEFT\
 			and brush.size_pen_pressure:
 		pressure = event.pressure
-	var transforms : Array = _painter.get_brush_preview_transforms(
+	var transforms : Array = painter.get_brush_preview_transforms(
 			get_viewport().get_mouse_position(), brush, pressure, follow_mouse)
 	
 	# Add necessary amount of previews.

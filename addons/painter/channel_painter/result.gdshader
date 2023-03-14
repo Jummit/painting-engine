@@ -7,13 +7,13 @@ Shader that applies a stroke to the existing result.
 
 uniform sampler2D previous : hint_default_white;
 uniform sampler2D stroke : hint_default_white;
-uniform sampler2D seams : hint_default_white;
+uniform sampler2D seams : hint_default_transparent;
 uniform bool erase;
-uniform float strength = 0.019;
 
 void fragment() {
-	vec2 offset = (texture(seams, UV).rg - vec2(.5)) * 2.0;
-	vec2 uv = UV + offset * strength;
+	vec4 offset = texture(seams, UV);
+	vec2 uv = offset.a == 1.0 ? offset.xy : UV;
+//	uv = UV; // TODO: Remove.
 	vec4 stroke_color = texture(stroke, uv);
 	vec4 previous_color = texture(previous, UV);
 	if (erase) {

@@ -176,7 +176,7 @@ func setup_painter() -> void:
 		paintable_model.material_override[
 				CHANNELS.keys()[channel] + "_texture"] =\
 				painter.get_result(channel)
-	brush_preview.painter = painter.get_path()
+	brush_preview.painter = painter
 	brush_preview.show()
 
 

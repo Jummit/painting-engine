@@ -131,7 +131,7 @@ func init(model : MeshInstance3D, result_size := Vector2(1024, 1024),
 	shape.set_faces(_model.mesh.get_faces())
 	_collision_shape.shape = shape
 	_collision_shape.transform = _model.transform
-	_seams_texture = await _seams_generator.generate(_model.mesh).completed
+	_seams_texture = await _seams_generator.generate(_model.mesh)
 	reset_channels(channels)
 	_current_pack = _store_results()
 

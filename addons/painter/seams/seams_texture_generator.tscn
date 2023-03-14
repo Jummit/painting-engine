@@ -38,7 +38,7 @@ current = true
 [node name="SeamsViewport" type="SubViewport" parent="."]
 transparent_bg = true
 size = Vector2i(1024, 1024)
-render_target_clear_mode = 1
+render_target_clear_mode = 2
 render_target_update_mode = 0
 
 [node name="SeamsRect" type="TextureRect" parent="SeamsViewport"]
